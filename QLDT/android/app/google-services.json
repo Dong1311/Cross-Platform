@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "175085949899",
+    "project_id": "react-navtive-qldt",
+    "storage_bucket": "react-navtive-qldt.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:175085949899:android:d28a5c651fa1a8a2c55c4e",
+        "android_client_info": {
+          "package_name": "com.dongvt215349.qldt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbhTpA6_dSyUnHPje39GF9wYycJz7i5o8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

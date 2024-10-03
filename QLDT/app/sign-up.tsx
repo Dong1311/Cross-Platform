@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
-import { useNavigation } from '@react-navigation/native';  
+import { createUserWithEmailAndPassword } from 'firebase/auth';  // Firebase Auth
+import { collection, addDoc } from 'firebase/firestore';  // Firestore cho việc lưu thông tin người dùng
+import { auth, db } from '../firebase';  // Firebase config
+import styles from '../public/styles/sign-up_style';
+import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 interface Errors {
@@ -11,6 +15,14 @@ interface Errors {
   password?: string;
   role?: string;
 }
+type RootStackParamList = {
+  'sign-up': undefined;
+  login: undefined;
+  home: undefined;
+};
+
+// Khai báo kiểu của navigation
+type NavigationProp = StackNavigationProp<RootStackParamList, 'sign-up'>;
 
 const SignUpScreen = () => {
   const [firstName, setFirstName] = useState<string>('');
@@ -18,12 +30,14 @@ const SignUpScreen = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [role, setRole] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Errors>({});  
-  const navigation = useNavigation<StackNavigationProp<any>>();
-  
+  const [errors, setErrors] = useState<Errors>({});
+  const [successMessage, setSuccessMessage] = useState<string>(''); // State để thông báo thành công
+  // const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();  
+
   const validateFields = () => {
     let valid = true;
-    let newErrors: Errors = {};  
+    let newErrors: Errors = {};
 
     if (!firstName) {
       newErrors.firstName = 'Vui lòng nhập tên';
@@ -54,42 +68,63 @@ const SignUpScreen = () => {
     return valid;
   };
 
+  const handleSignUp = async () => {
+    if (validateFields()) {
+      try {
+        // Đăng ký người dùng với Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Lưu thông tin người dùng vào Firestore (tuỳ chọn)
+        await addDoc(collection(db, 'users'), {
+          uid: user.uid,
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          role: role,
+        });
+
+        setSuccessMessage('Đăng ký thành công!'); // Thông báo thành công
+        console.log('User đăng ký thành công: ', user.email);
+      } catch (error: any) {
+        console.error('Lỗi đăng ký: ', error.message);
+        setErrors({ email: error.message }); // Hiển thị lỗi từ Firebase
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Image source={require('../../assets/images/logohust_2.png')} style={styles.logo} />
+      <Image source={require('../assets/images/logohust_2.png')} style={styles.logo} />
       <Text style={styles.title}>Welcome to AllHust</Text>
 
       <View style={styles.form}>
         <View style={styles.nameContainer}>
-        <TextInput
-          style={[
-            styles.input, 
-            styles.halfInput, 
-            !!errors.lastName ? styles.errorInput : null  // Chỉ áp dụng style khi có lỗi
-          ]}
-          placeholder="Họ"
-          value={lastName}
-          onChangeText={setLastName}
-        />
-         
-
           <TextInput
             style={[
               styles.input, 
               styles.halfInput, 
-              !!errors.firstName ? styles.errorInput : null  // Chỉ áp dụng style khi có lỗi
+              !!errors.lastName ? styles.errorInput : null
+            ]}
+            placeholder="Họ"
+            value={lastName}
+            onChangeText={setLastName}
+          />
+          <TextInput
+            style={[
+              styles.input, 
+              styles.halfInput, 
+              !!errors.firstName ? styles.errorInput : null
             ]}
             placeholder="Tên"
             value={firstName}
             onChangeText={setFirstName}
           />
-          
         </View>
         <View style={styles.nameContainer}>
           {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
           {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
         </View>
-        
 
         <TextInput
           style={[styles.input, errors.email ? styles.errorInput : null]}
@@ -135,86 +170,18 @@ const SignUpScreen = () => {
         />
         {errors.role && <Text style={styles.errorText}>{errors.role}</Text>}
 
-        <TouchableOpacity style={styles.button} onPress={validateFields}>
+        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
           <Text style={styles.buttonText}>SIGN UP</Text>
         </TouchableOpacity>
         
+        {successMessage ? <Text style={{ color: 'green', marginTop: 20 }}>{successMessage}</Text> : null}
+
         <TouchableOpacity onPress={() => navigation.navigate('login')}>
           <Text style={styles.loginText}>Hoặc đăng nhập với username/password</Text>
         </TouchableOpacity>
-        
-        {/* <TouchableOpacity onPress={() => navigation.navigate('sign-up')}>
-          <Text style={styles.registerText}>Chưa có tài khoản? Đăng ký ngay</Text>
-        </TouchableOpacity> */}
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#b71c1c',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  logo: {
-    width: 170,
-    height: 170,
-    marginBottom: 20,
-    resizeMode: 'contain',
-  },
-  title: {
-    fontSize: 24,
-    color: 'white',
-    marginBottom: 20,
-  },
-  form: {
-    width: '100%',
-  },
-  input: {
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 5,
-    marginBottom: 10,
-    fontSize: 16,
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  halfInput: {
-    width: '48%',
-  },
-  button: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 30,
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  buttonText: {
-    color: '#b71c1c',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  loginText: {
-    color: 'white',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 10,
-    textDecorationLine: 'underline',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginBottom: 10,
-  },
-  errorInput: {
-    borderColor: 'red',
-    borderWidth: 1,
-  },
-});
 
 export default SignUpScreen;

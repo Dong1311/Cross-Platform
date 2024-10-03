@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Modal,
+  View, Text, TextInput, TouchableOpacity, Image, Modal,
 } from 'react-native';
+import { useRouter } from 'expo-router';  // Import useRouter để điều hướng
+import { signInWithEmailAndPassword } from 'firebase/auth';  // Import Firebase Auth
+import { auth } from '../firebase';  // Import Firebase Auth
+
+import styles from '../public/styles/login_style';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -9,15 +14,39 @@ const LoginScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');  // State để lưu lỗi
+  const router = useRouter();  // Khởi tạo useRouter
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
+  // Hàm xử lý đăng nhập
+  const handleLogin = async () => {
+    try {
+      // Xác thực với Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log('Đăng nhập thành công với người dùng: ', user.email);
+      
+      // Điều hướng tới màn hình Home sau khi đăng nhập thành công
+      router.push('/home');
+    } catch (error: unknown) {
+      // Ép kiểu cho error để TypeScript biết đây là kiểu Error
+      if (error instanceof Error) {
+        console.error(error.message);
+        setErrorMessage('Email hoặc mật khẩu không chính xác');  // Thông báo lỗi
+      } else {
+        console.error('Unknown error occurred');
+      }
+    }
+  };
+  
+
   return (
     <View style={styles.container}>
       {/* Logo */}
-      <Image source={require('../../assets/images/logohust_2.png')} style={styles.logo} />
+      <Image source={require('../assets/images/logohust_2.png')} style={styles.logo} />
 
       {/* Title */}
       <Text style={styles.title}>Đăng nhập với tài khoản QLĐT</Text>
@@ -58,7 +87,11 @@ const LoginScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.button}>
+      {/* Hiển thị thông báo lỗi nếu có */}
+      {errorMessage ? <Text style={{ color: 'red' }}>{errorMessage}</Text> : null}
+
+      {/* Button Đăng nhập */}
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>ĐĂNG NHẬP</Text>
       </TouchableOpacity>
 
@@ -66,6 +99,7 @@ const LoginScreen = () => {
         <Text style={styles.forgotPassword}>Quên mật khẩu</Text>
       </TouchableOpacity>
 
+      {/* Modal Quên Mật Khẩu */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -105,125 +139,5 @@ const LoginScreen = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#b71c1c',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  logo: {
-    width: 170,
-    height: 170,
-    marginBottom: 20,
-    resizeMode: 'contain',
-  },
-  title: {
-    fontSize: 18,
-    color: 'white',
-    marginBottom: 30,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    paddingHorizontal: 10,
-    marginVertical: 10,
-    width: '100%',
-  },
-  input: {
-    flex: 1,
-    padding: 10,
-    fontSize: 16,
-    color: '#000',
-  },
-  icon: {
-    width: 24,
-    height: 24,
-    tintColor: '#aaa',
-  },
-  button: {
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    marginVertical: 20,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#b71c1c',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  forgotPassword: {
-    color: '#fff',
-    textDecorationLine: 'underline',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalView: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalTitle: {
-    fontSize: 14,
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  modalInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f2f2f2',
-    borderRadius: 30,
-    paddingHorizontal: 10,
-    marginVertical: 10,
-    width: '100%',
-  },
-  modalInput: {
-    flex: 1,
-    padding: 10,
-    fontSize: 16,
-    color: '#000',
-  },
-  modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 20,
-  },
-  cancelButton: {
-    backgroundColor: '#f2f2f2',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  confirmButton: {
-    backgroundColor: '#b71c1c',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  cancelButtonText: {
-    color: '#b71c1c',
-    fontSize: 16,
-  },
-  confirmButtonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-});
 
 export default LoginScreen;

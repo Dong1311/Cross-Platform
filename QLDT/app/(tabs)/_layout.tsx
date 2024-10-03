@@ -24,15 +24,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="login"
-        options={{
-          title: 'Login',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'log-in' : 'log-in-outline'} color={color} />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="class_register"  
         options={{
@@ -64,6 +56,15 @@ export default function TabLayout() {
         name="edit_class"  
         options={{
           title: 'Edit Class',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="test_class"   
+        options={{
+          title: 'Test Class',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
           ),

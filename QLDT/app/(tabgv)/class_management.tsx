@@ -53,7 +53,7 @@ const ClassManagement = () => {
   }
 
   return (
-    <View style={styles.container1}>
+    <View style={styles.container1} >
       <View style={styles.headerContainer}>
         <Text style={styles.headerText}>HUST</Text>
         <Text style={styles.subHeaderText}>CLASS MANAGEMENT</Text>

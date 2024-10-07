@@ -87,14 +87,29 @@ const SignUpScreen = () => {
         setSuccessMessage('Đăng ký thành công!'); // Thông báo thành công
         console.log('User đăng ký thành công: ', user.email);
       } catch (error: any) {
-        console.error('Lỗi đăng ký: ', error.message);
-        setErrors({ email: error.message }); // Hiển thị lỗi từ Firebase
+        let newErrors: Errors = {};
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            newErrors.email = 'Email này đã được sử dụng';
+            break;
+          case 'auth/invalid-email':
+            newErrors.email = 'Email không hợp lệ';
+            break;
+          case 'auth/weak-password':
+            newErrors.password = 'Mật khẩu quá yếu';
+            break;
+          default:
+            newErrors.email = 'Đã xảy ra lỗi. Vui lòng thử lại';
+        }
+        setErrors(newErrors);
       }
     }
   };
 
   return (
+
     <View style={styles.container}>
+      
       <Image source={require('../assets/images/logohust_2.png')} style={styles.logo} />
       <Text style={styles.title}>Welcome to AllHust</Text>
 

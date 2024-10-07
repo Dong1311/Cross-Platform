@@ -4,7 +4,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';  // Import useRouter để điều hướng
 import { signInWithEmailAndPassword } from 'firebase/auth';  // Import Firebase Auth
-import { auth } from '../firebase';  // Import Firebase Auth
+import { doc, getDoc } from 'firebase/firestore'; // Import Firestore để lấy dữ liệu
+import { auth, db } from '../firebase';  // Import Firebase config
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 import styles from '../public/styles/login_style';
 
@@ -22,25 +24,43 @@ const LoginScreen = () => {
   };
 
   // Hàm xử lý đăng nhập
+
   const handleLogin = async () => {
     try {
-      // Xác thực với Firebase
+      // Đăng nhập với Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log('Đăng nhập thành công với người dùng: ', user.email);
-      
-      // Điều hướng tới màn hình Home sau khi đăng nhập thành công
-      router.push('/home');
+
+      // Truy vấn để tìm tài liệu người dùng dựa trên thuộc tính uid
+      const q = query(collection(db, 'users'), where('uid', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        querySnapshot.forEach((doc) => {
+          const userData = doc.data();
+          console.log('Thông tin người dùng:', userData);
+          
+          // Kiểm tra role và điều hướng dựa trên role
+          if (userData.role === 'student') {
+            router.push('/homesv');  // Điều hướng đến trang sinh viên
+          } else {
+            router.push('/homesv');  // Điều hướng đến trang khác cho các vai trò khác
+          }
+        });
+      } else {
+        console.error('Không tìm thấy dữ liệu người dùng');
+        setErrorMessage('Đã xảy ra lỗi khi lấy thông tin người dùng');
+      }
     } catch (error: unknown) {
-      // Ép kiểu cho error để TypeScript biết đây là kiểu Error
       if (error instanceof Error) {
         console.error(error.message);
-        setErrorMessage('Email hoặc mật khẩu không chính xác');  // Thông báo lỗi
+        setErrorMessage('Email hoặc mật khẩu không chính xác');
       } else {
         console.error('Unknown error occurred');
       }
     }
   };
+
   
 
   return (

@@ -1,8 +1,9 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { initializeAuth, getAuth, Auth, browserLocalPersistence } from 'firebase/auth';  // Thay thế getReactNativePersistence
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getAuth, initializeAuth, getReactNativePersistence, Auth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Cấu hình Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCbhTpA6_dSyUnHPje39GF9wYycJz7i5o8",
   authDomain: "react-navtive-qldt.firebaseapp.com",
@@ -15,12 +16,18 @@ const firebaseConfig = {
 // Khởi tạo Firebase App
 const app = initializeApp(firebaseConfig);
 
-// Khởi tạo Firestore
-const db = getFirestore(app);
+// Khởi tạo Firestore với kiểu Firestore
+const db: Firestore = getFirestore(app);
 
-// Khởi tạo hoặc lấy Firebase Auth
-const auth = initializeAuth(app, {
-  persistence: browserLocalPersistence, // Sử dụng persistence khác nếu getReactNativePersistence không khả dụng
-});
+// Khởi tạo Auth với kiểu Auth
+let auth: Auth;
+try {
+  auth = getAuth(app); // Nếu đã khởi tạo Firebase Auth
+} catch (e) {
+  // Khởi tạo Firebase Auth với AsyncStorage để duy trì trạng thái đăng nhập
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+}
 
 export { auth, db };

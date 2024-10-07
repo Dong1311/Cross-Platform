@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
+import Ionicons from 'react-native-vector-icons/Ionicons';  // Import Icon
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { Link } from 'expo-router';
 
-const EditClass: React.FC = () => {
+const CreateClass: React.FC = () => {
   const [classId, setClassId] = useState('');
   const [subClassId, setSubClassId] = useState('');
   const [className, setClassName] = useState('');
@@ -12,17 +15,25 @@ const EditClass: React.FC = () => {
   const [endDate, setEndDate] = useState('');
   const [maxStudents, setMaxStudents] = useState('');
 
-  const handleEditClass = () => {
+  const navigation = useNavigation(); // Sử dụng điều hướng để quay lại
+
+  const handleCreateClass = () => {
     console.log('Class Created');
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerContainer}>
+      <TouchableOpacity style={styles.backButton}>
+        <Link href="/home_gv">
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </Link>
+      </TouchableOpacity>
         <Text style={styles.headerText}>HUST</Text>
-        <Text style={styles.subHeaderText}>EDIT CLASS</Text>
+        <Text style={styles.subHeaderText}>CREATE CLASS</Text>
       </View>
       <View style = {styles.bodyContainer}>
+        {/* Form fields */}
         <TextInput
           style={styles.input}
           placeholder="Mã lớp*"
@@ -89,31 +100,22 @@ const EditClass: React.FC = () => {
           value={maxStudents}
           onChangeText={setMaxStudents}
         />
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.button} onPress={handleEditClass}>
-            <Text style={styles.buttonText}>Xóa lớp này</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={handleEditClass}>
-            <Text style={styles.buttonText}>Xác nhận</Text>
-          </TouchableOpacity>
-        </View>
-        
+
+        <TouchableOpacity style={styles.button} onPress={handleCreateClass}>
+          <Text style={styles.buttonText}>Tạo lớp học</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity>
           <Text style={styles.linkText}>Thông tin danh sách các lớp mở</Text>
         </TouchableOpacity>
       </View>
 
-      
-      
-      
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    
     backgroundColor: '#fff',
     flexGrow: 1,
     justifyContent: 'center',
@@ -122,28 +124,33 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'space-between',
     marginBottom: 20,
-    backgroundColor: '#b71c1c'
+    backgroundColor: '#b71c1c',
+    paddingTop: 40,  // Tạo khoảng trống cho mũi tên
+    paddingBottom: 20,
+  },
+  backButton: {
+    position: 'absolute',
+    left: 40,
+    top: 60,
+    zIndex: 999,
   },
   bodyContainer:{
     padding:20,
     flexDirection: 'column',
     justifyContent: 'space-between',
     marginBottom: 20,
-    backgroundColor: '#ffff'
+    backgroundColor: '#ffff',
   },
   headerText: {
     fontSize: 24,
     color: '#ffff',
     textAlign: 'center',
-    marginBottom: 10,
-    marginTop: 50,
     fontWeight: 'bold',
   },
   subHeaderText: {
     fontSize: 16,
     color: '#ffff',
     textAlign: 'center',
-    marginBottom: 20,
   },
   input: {
     height: 50,
@@ -154,29 +161,24 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   button: {
-    flex: 0.48,
-    backgroundColor: '#b30000',
-    paddingVertical: 10,
-    borderRadius: 4,
-    alignItems: 'center',
+    backgroundColor: '#B30000',
+    paddingVertical: 15,
+    borderRadius: 5,
+    marginTop: 20,
   },
   buttonText: {
     color: '#fff',
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   linkText: {
     color: '#B30000',
     textAlign: 'center',
     marginTop: 15,
   },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
 });
 
 const pickerSelectStyles = {
-  
   inputIOS: {
     height: 50,
     borderColor: '#B30000',
@@ -195,4 +197,4 @@ const pickerSelectStyles = {
   },
 };
 
-export default EditClass;
+export default CreateClass;

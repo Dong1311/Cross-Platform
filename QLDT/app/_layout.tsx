@@ -1,3 +1,7 @@
+import { LogBox } from 'react-native';
+
+LogBox.ignoreAllLogs();
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -27,12 +31,22 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack initialRouteName="home_gv" >
         {/* Đặt màn hình mặc định */}
-        <Stack.Screen name="login" options={{ headerShown: false }} />
+        
         <Stack.Screen name="sign-up" options={{ headerShown: false }} />
-        <Stack.Screen name="home" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
+
+
+        <Stack.Screen name="(tabgv)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabgv)/home_gv" options={{ headerShown: false }} />
+        <Stack.Screen name="/edit_class" options={{ headerShown: false }} />
+        <Stack.Screen name="/create_class" options={{ headerShown: false }} />
+
+        <Stack.Screen name="(tabsv)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabsv)/home_sv" options={{ headerShown: false }} />
+
       </Stack>
     </ThemeProvider>
   );

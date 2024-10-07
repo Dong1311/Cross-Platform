@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 
-const CreateClass: React.FC = () => {
+const EditClass: React.FC = () => {
   const [classId, setClassId] = useState('');
   const [subClassId, setSubClassId] = useState('');
   const [className, setClassName] = useState('');
@@ -12,7 +12,7 @@ const CreateClass: React.FC = () => {
   const [endDate, setEndDate] = useState('');
   const [maxStudents, setMaxStudents] = useState('');
 
-  const handleCreateClass = () => {
+  const handleEditClass = () => {
     console.log('Class Created');
   };
 
@@ -20,7 +20,7 @@ const CreateClass: React.FC = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.headerText}>HUST</Text>
-        <Text style={styles.subHeaderText}>CREATE CLASS</Text>
+        <Text style={styles.subHeaderText}>EDIT CLASS</Text>
       </View>
       <View style = {styles.bodyContainer}>
         <TextInput
@@ -89,23 +89,31 @@ const CreateClass: React.FC = () => {
           value={maxStudents}
           onChangeText={setMaxStudents}
         />
-
-        <TouchableOpacity style={styles.button} onPress={handleCreateClass}>
-          <Text style={styles.buttonText}>Tạo lớp học</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.button} onPress={handleEditClass}>
+            <Text style={styles.buttonText}>Xóa lớp này</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleEditClass}>
+            <Text style={styles.buttonText}>Xác nhận</Text>
+          </TouchableOpacity>
+        </View>
+        
 
         <TouchableOpacity>
           <Text style={styles.linkText}>Thông tin danh sách các lớp mở</Text>
         </TouchableOpacity>
       </View>
 
+      
+      
+      
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    
+    marginTop:0,
     backgroundColor: '#fff',
     flexGrow: 1,
     justifyContent: 'center',
@@ -128,7 +136,7 @@ const styles = StyleSheet.create({
     color: '#ffff',
     textAlign: 'center',
     marginBottom: 10,
-    marginTop: 50,
+    marginTop: 20,
     fontWeight: 'bold',
   },
   subHeaderText: {
@@ -146,20 +154,24 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   button: {
-    backgroundColor: '#B30000',
-    paddingVertical: 15,
-    borderRadius: 5,
-    marginTop: 20,
+    flex: 0.48,
+    backgroundColor: '#b30000',
+    paddingVertical: 10,
+    borderRadius: 4,
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
   },
   linkText: {
     color: '#B30000',
     textAlign: 'center',
     marginTop: 15,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
 });
 
@@ -183,4 +195,4 @@ const pickerSelectStyles = {
   },
 };
 
-export default CreateClass;
+export default EditClass;

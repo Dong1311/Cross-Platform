@@ -93,10 +93,12 @@ const Home = () => {
           <Icon name="group" size={24} color="purple" />
           <Text style={[styles.tabBarLabel, { color: 'purple' }]}>Nhóm</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}>
-          <Icon name="assignment" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Bài tập</Text>
-        </TouchableOpacity>
+        <Link href="/assignment_sv" style={{ zIndex: 10 }}>
+          <TouchableOpacity style={styles.tabBarButton}>
+            <Icon name="assignment" size={24} color="black" />
+            <Text style={styles.tabBarLabel}>Bài tập</Text>
+          </TouchableOpacity>
+        </Link>
         <TouchableOpacity style={styles.tabBarButton}>
           <Icon name="calendar-today" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Lịch</Text>

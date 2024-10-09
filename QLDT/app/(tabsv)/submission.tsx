@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker'; 
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 
-const SubmitAssignmentScreen = ({ route, navigation }) => {
-  const [selectedFile, setSelectedFile] = useState(null);
+type SubmitAssignmentScreenProps = {
+  route: RouteProp<{ params: { id: string } }, 'params'>;
+  navigation: StackNavigationProp<any, any>;
+};
+
+
+const SubmitAssignmentScreen: React.FC<SubmitAssignmentScreenProps> = ({ route, navigation }) => {
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   // Test data for assignment
   const assignment = {
@@ -34,9 +42,10 @@ const SubmitAssignmentScreen = ({ route, navigation }) => {
       quality: 1,
     });
 
-    if (!picked.cancelled) {
-      setSelectedFile(picked.uri); // Set selected file URI
-    }
+    if (!picked.canceled && picked.assets && picked.assets.length > 0) {
+      setSelectedFile(picked.assets[0].uri); // Lấy URI từ assets của kết quả
+    }    
+    
   };
 
   return (

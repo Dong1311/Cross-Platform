@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Link } from 'expo-router';
+import Icons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Link, useRouter } from 'expo-router';
 
 const Home = () => {
   // State để quản lý danh sách lớp học và tìm kiếm
   const [search, setSearch] = useState('');
+  const router = useRouter(); 
 
   interface ClassItem {
     id: string;
@@ -97,9 +99,13 @@ const Home = () => {
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}>
+        <TouchableOpacity style={styles.tabBarButton} >
           <Icon name="calendar-today" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Lịch</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarButton} onPress={()=>router.push('/documemts-class')}>
+          <Icons name="file-document-multiple" size={24} color="black" />
+          <Text style={styles.tabBarLabel}>Tài liệu</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -205,6 +211,7 @@ const styles = StyleSheet.create({
   },
   tabBarButton: {
     alignItems: 'center',
+    flex:1
   },
   tabBarLabel: {
     marginTop: 4,

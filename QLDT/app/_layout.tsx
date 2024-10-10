@@ -37,6 +37,7 @@ export default function RootLayout() {
         <Stack.Screen name="sign-up" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
+        <Stack.Screen name="documemts-class" options={{ headerShown: false }}/>
 
 
         <Stack.Screen name="(tabgv)" options={{ headerShown: false }} />

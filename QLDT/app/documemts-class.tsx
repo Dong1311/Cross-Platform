@@ -11,20 +11,30 @@ import {
   Alert,
   TouchableWithoutFeedback,
   Pressable,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker"; 
 import axios from "axios"; 
+import { router, Stack } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const API_URL = "https://6705494f031fd46a830f6626.mockapi.io/ehust/documents"; 
 
 export default function App() {
-  const [documents, setDocuments] = useState([]); 
+  const [documents, setDocuments] = useState<Documents[]>([]); 
   const [modalVisible, setModalVisible] = useState(false); 
-  const [selectedDocument, setSelectedDocument] = useState(null); 
+  const [selectedDocument, setSelectedDocument] = useState<Documents>(); 
   const [newDocumentName, setNewDocumentName] = useState(""); 
   const [loading, setLoading] = useState(true); 
-  const [error, setError] = useState(null); 
+  const [error, setError] = useState(""); 
+
+  interface Documents {
+    id: string;
+    name: string;
+    uri: string;
+    type: string;
+  }
 
   useEffect(() => {
     fetchDocuments();
@@ -42,7 +52,7 @@ export default function App() {
     }
   };
 
-  const openModal = (document) => {
+  const openModal = (document : Documents) => {
     setSelectedDocument(document);
     setNewDocumentName(document.name); 
     setModalVisible(true);
@@ -50,7 +60,7 @@ export default function App() {
 
   const closeModal = () => {
     setModalVisible(false);
-    setSelectedDocument(null);
+    setSelectedDocument(undefined);
   };
 
   const handleDeleteDocument = async () => {
@@ -58,7 +68,7 @@ export default function App() {
       try {
         await axios.delete(`${API_URL}/${selectedDocument.id}`);
         setDocuments((prevDocuments) =>
-          prevDocuments.filter((doc) => doc.id !== selectedDocument.id)
+          prevDocuments.filter((doc : Documents) => doc.id !== selectedDocument.id)
         );
         closeModal();
       } catch (err) {
@@ -109,7 +119,7 @@ export default function App() {
     }
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item } : {item : Documents}) => (
     <View style={styles.itemContainer}>
       <Ionicons name="document" size={24} color="blue" />
       <Text style={styles.documentName}>{item.name}</Text>
@@ -123,9 +133,13 @@ export default function App() {
   );
 
   return (
-    <View style={styles.container}>
+    <>
+    <StatusBar backgroundColor="#d32f2f" barStyle="light-content" />
+    <SafeAreaView style={styles.container}>
       <View style={styles.navBar}>
-        <Ionicons name="arrow-back" size={24} color="white" />
+        <TouchableOpacity onPress={()=>{router.back()}}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
         <Text style={styles.navTitle}>Tài liệu học tập</Text>
         <TouchableOpacity onPress={handleUploadDocument}>
           <Ionicons name="add" size={28} color="white" />
@@ -188,7 +202,8 @@ export default function App() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </View>
+    </SafeAreaView>
+    </>
   );
 }
 
@@ -202,7 +217,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 20,
-    paddingTop: 40,
     backgroundColor: "#d32f2f",
   },
   navTitle: {

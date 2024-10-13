@@ -110,7 +110,7 @@ const Home = () => {
           <Icon name="calendar-today" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Lịch</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton} onPress={()=>router.push('/documemts-class')}>
+        <TouchableOpacity style={styles.tabBarButton} onPress={()=>router.push('/documents-class')}>
           <Icons name="file-document-multiple" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Tài liệu</Text>
         </TouchableOpacity>

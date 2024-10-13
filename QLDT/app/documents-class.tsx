@@ -19,12 +19,12 @@ import axios from "axios";
 const API_URL = "https://6705494f031fd46a830f6626.mockapi.io/ehust/documents"; 
 
 export default function App() {
-  const [documents, setDocuments] = useState([]); 
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [modalVisible, setModalVisible] = useState(false); 
-  const [selectedDocument, setSelectedDocument] = useState(null); 
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [newDocumentName, setNewDocumentName] = useState(""); 
   const [loading, setLoading] = useState(true); 
-  const [error, setError] = useState(null); 
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -42,9 +42,13 @@ export default function App() {
     }
   };
 
-  const openModal = (document) => {
+  interface Document {
+    id: string;
+    name: string;
+  }
+  const openModal = (document: Document) => {
     setSelectedDocument(document);
-    setNewDocumentName(document.name); 
+    setNewDocumentName(document.name);
     setModalVisible(true);
   };
 
@@ -109,7 +113,7 @@ export default function App() {
     }
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: Document }) => (
     <View style={styles.itemContainer}>
       <Ionicons name="document" size={24} color="blue" />
       <Text style={styles.documentName}>{item.name}</Text>
@@ -121,6 +125,7 @@ export default function App() {
       </TouchableOpacity>
     </View>
   );
+  
 
   return (
     <View style={styles.container}>

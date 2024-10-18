@@ -63,6 +63,25 @@ export default function App() {
     setSelectedDocument(undefined);
   };
 
+  const confirmDelete = () => {
+    Alert.alert('Xác nhận','Bạn có muốn xóa không ?',[
+      {
+        text: 'Hủy',
+        onPress: () => closeModal(),
+        style: 'cancel',
+      },
+      {
+        text: 'Xóa',
+        onPress: () => handleDeleteDocument(),
+        style: 'destructive',
+      },
+    ],
+    {
+      cancelable: true,
+    }
+  )
+  }
+
   const handleDeleteDocument = async () => {
     if (selectedDocument) {
       try {
@@ -170,7 +189,7 @@ export default function App() {
           <View style={styles.modalBackground}>
             <TouchableWithoutFeedback onPress={() => {}}>
               <View style={styles.modalContainer}>
-                <Text style={styles.modalTitle}>Edit Document</Text>
+                <Text style={styles.modalTitle}>Chỉnh sửa tài liệu</Text>
                 <TextInput
                   style={styles.input}
                   value={newDocumentName}
@@ -181,21 +200,21 @@ export default function App() {
                   style={styles.modalButton}
                   onPress={handleEditDocumentName}
                 >
-                  <Text style={styles.modalButtonText}>Save</Text>
+                  <Text style={styles.modalButtonText}>Lưu</Text>
                 </Pressable>
 
                 <Pressable
                   style={styles.modalButton}
-                  onPress={handleDeleteDocument}
+                  onPress={confirmDelete}
                 >
-                  <Text style={styles.modalButtonText}>Delete</Text>
+                  <Text style={styles.modalButtonText}>Xóa</Text>
                 </Pressable>
 
                 <Pressable
                   style={[styles.modalButton, { backgroundColor: "#d32f2f" }]}
                   onPress={closeModal}
                 >
-                  <Text style={styles.modalButtonText}>Close</Text>
+                  <Text style={styles.modalButtonText}>Thoát</Text>
                 </Pressable>
               </View>
             </TouchableWithoutFeedback>

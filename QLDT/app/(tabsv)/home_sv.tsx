@@ -102,11 +102,11 @@ const Home = () => {
           </TouchableOpacity>
         </Link> */}
         {/* <TouchableOpacity style={styles.tabBarButton}> */}
-        <TouchableOpacity style={styles.tabBarButton}>
+        <TouchableOpacity style={styles.tabBarButton} onPress={()=>router.push('/(tabsv)/assignment_sv')}>
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton} >
+        <TouchableOpacity style={styles.tabBarButton}  >
           <Icon name="calendar-today" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Lịch</Text>
         </TouchableOpacity>

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { router } from 'expo-router'
 import React, { useEffect, useState } from 'react'
-import { StatusBar, Text, TouchableOpacity, View, StyleSheet, FlatList, ViewBase, Alert } from 'react-native'
+import { StatusBar, Text, TouchableOpacity, View, StyleSheet, FlatList, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const students = [
@@ -37,22 +37,22 @@ const students = [
 
 
 const Attendance = () => {
-  const [attendance, setAttendance] = useState([]);
+  const [attendance, setAttendance] = useState<string[]>([]);
 
   useEffect(()=>{
     const listIdStudent = students.map((item) => item.id);
     setAttendance(listIdStudent);
   },[])
 
-  const handleStudentPress = (studentId) => {
-    setAttendance((prev) =>
+  const handleStudentPress = (studentId : string) => {
+    setAttendance((prev : string[]) =>
       prev.includes(studentId)
         ? prev.filter((id) => id !== studentId) 
         : [...prev, studentId]
     );
   };
 
-  const handleSave = ({attendance}) => {
+  const handleSave = ({attendance} : {attendance : string[]}) => {
     Alert.alert('Xác nhận','Bạn có muốn lưu không ?',[
         {
           text: 'Hủy',

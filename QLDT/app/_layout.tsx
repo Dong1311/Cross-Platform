@@ -45,6 +45,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabgv)/edit_class" options={{ headerShown: false }} />
         <Stack.Screen name="(tabgv)/create_class" options={{ headerShown: false }} />
         <Stack.Screen name="(tabgv)/attendance" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabgv)/absence_list" options={{ headerShown: false }} />
 
         {/* <Stack.Screen name="(tabsv)" options={{ headerShown: false }} /> */}
         <Stack.Screen name="(tabsv)/home_sv" options={{ headerShown: false }} />

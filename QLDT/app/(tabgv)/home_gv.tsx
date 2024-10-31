@@ -145,6 +145,10 @@ const Home = () => {
           <Icon name="checklist" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Điểm danh</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarButton} onPress={()=> router.push('/(tabgv)/absence_list')}>
+          <Icon name="checklist" size={24} color="black" />
+          <Text style={styles.tabBarLabel}>Ds xin vắng</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

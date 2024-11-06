@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, Image, Modal,
-} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity, Image, Modal,} from 'react-native';
 import { useRouter } from 'expo-router';  // Import useRouter để điều hướng
-import { signInWithEmailAndPassword } from 'firebase/auth';  // Import Firebase Auth
-import { doc, getDoc } from 'firebase/firestore'; // Import Firestore để lấy dữ liệu
-import { auth, db } from '../firebase';  // Import Firebase config
-import { collection, query, where, getDocs } from 'firebase/firestore';
 
 import styles from '../public/styles/login_style';
+import axios from 'axios';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -18,6 +13,7 @@ const LoginScreen = () => {
   const [forgotEmail, setForgotEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');  // State để lưu lỗi
   const router = useRouter();  // Khởi tạo useRouter
+  const deviceId = 1;
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -27,37 +23,17 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     try {
-      // Đăng nhập với Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Truy vấn để tìm tài liệu người dùng dựa trên thuộc tính uid
-      const q = query(collection(db, 'users'), where('uid', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        querySnapshot.forEach((doc) => {
-          const userData = doc.data();
-          console.log('Thông tin người dùng:', userData);
-          
-          // Kiểm tra role và điều hướng dựa trên role
-          if (userData.role === 'student') {
-            router.push('/homesv');  // Điều hướng đến trang sinh viên
-          } else {
-            router.push('/homesv');  // Điều hướng đến trang khác cho các vai trò khác
-          }
-        });
-      } else {
-        console.error('Không tìm thấy dữ liệu người dùng');
-        setErrorMessage('Đã xảy ra lỗi khi lấy thông tin người dùng');
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(error.message);
-        setErrorMessage('Email hoặc mật khẩu không chính xác');
-      } else {
-        console.error('Unknown error occurred');
-      }
+      const res = await axios.post('http://160.30.168.228:8080/it4788/login', {email,password,deviceId})
+      if(res.status === 200) {
+        if(res.data.role === 'STUDENT') {
+          router.push('/home_sv')
+        } else {
+          router.push('/home_gv')
+        }
+      } 
+    } catch (error) {
+      console.log(error)
+      setErrorMessage('email hoặc mật khẩu không đúng')
     }
   };
 
@@ -108,7 +84,7 @@ const LoginScreen = () => {
       </View>
 
       {/* Hiển thị thông báo lỗi nếu có */}
-      {errorMessage ? <Text style={{ color: 'red' }}>{errorMessage}</Text> : null}
+      {errorMessage ? <Text style={{ color: 'white' }}>{errorMessage}</Text> : null}
 
       {/* Button Đăng nhập */}
       <TouchableOpacity style={styles.button} onPress={handleLogin}>

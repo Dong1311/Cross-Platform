@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, Image, Modal,
-} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity, Image, Modal,} from 'react-native';
 import { useRouter } from 'expo-router';  // Import useRouter để điều hướng
+
 import styles from '../public/styles/login_style';
+import axios from 'axios';
+import { useAuth } from '../Context/AuthProvider';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -13,6 +14,8 @@ const Login = () => {
   const [forgotEmail, setForgotEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');  // State để lưu lỗi
   const router = useRouter();  // Khởi tạo useRouter
+  const deviceId = 1;
+  const { token, saveToken } = useAuth();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -21,55 +24,19 @@ const Login = () => {
   // Hàm xử lý đăng nhập
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://160.30.168.228:8080/it4788/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          deviceId: 2, 
-        }),
-      });
-  
-      // Kiểm tra nếu phản hồi là JSON
-      const contentType = response.headers.get("content-type");
-      let result;
-  
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        // Nếu phản hồi không phải JSON, lấy nội dung dưới dạng văn bản
-        const text = await response.text();
-        console.error("Unexpected response format:", text);
-        setErrorMessage("Server returned an unexpected response format. Please try again later.");
-        return;
-      }
-  
-      if (!response.ok) {
-        // Nếu phản hồi từ server không thành công, hiển thị thông báo lỗi từ `result.message`
-        setErrorMessage(result.message || `Lỗi server: ${response.status} - ${response.statusText}`);
-        return;
-      }
-  
-      if (result.token) {
-        console.log('Thông tin người dùng:', result);
-  
-        // Kiểm tra role và điều hướng dựa trên role
-        if (result.role === 'STUDENT') {
-          router.push({ pathname: "/(tabsv)/home_sv" });
-        } else if (result.role === 'LECTURER') {
-          router.push({ pathname: "/(tabgv)/home_gv" });
+
+      const res = await axios.post('http://160.30.168.228:8080/it4788/login', {email,password,deviceId})
+      if(res.status === 200) {
+        if(res.data.role === 'STUDENT') {
+          router.push('/home_sv')
+        } else {
+          router.push('/home_gv')
         }
-      } else {
-        setErrorMessage('Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.');
-      }
+        saveToken(res.data.token)
+      } 
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Login error:', error);
-        setErrorMessage(`Lỗi chi tiết: ${error.message}`);
-      } else {
-        setErrorMessage('Đã xảy ra lỗi không xác định. Vui lòng thử lại.');
-      }
+      console.log(error)
+      setErrorMessage('email hoặc mật khẩu không đúng')
     }
   };
 
@@ -118,7 +85,7 @@ const Login = () => {
       </View>
 
       {/* Hiển thị thông báo lỗi nếu có */}
-      {errorMessage ? <Text style={{ color: 'red' }}>{errorMessage}</Text> : null}
+      {errorMessage ? <Text style={{ color: 'white' }}>{errorMessage}</Text> : null}
 
       {/* Button Đăng nhập */}
       <TouchableOpacity style={styles.button} onPress={handleLogin}>

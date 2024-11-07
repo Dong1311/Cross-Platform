@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
+import attendance from './attendance';
 
 const Home = () => {
   // State để quản lý danh sách lớp học và tìm kiếm
@@ -139,6 +140,14 @@ const Home = () => {
         <TouchableOpacity style={styles.tabBarButton}>
           <Icon name="calendar-today" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Lịch</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarButton} onPress={()=> router.push('/attendance')}>
+          <Icon name="checklist" size={24} color="black" />
+          <Text style={styles.tabBarLabel}>Điểm danh</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarButton} onPress={()=> router.push('/(tabgv)/absence_list')}>
+          <Icon name="checklist" size={24} color="black" />
+          <Text style={styles.tabBarLabel}>Ds xin vắng</Text>
         </TouchableOpacity>
       </View>
     </View>

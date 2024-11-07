@@ -53,10 +53,15 @@ export default function RootLayout() {
 
           {/* <Stack.Screen name="(tabsv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabsv)/home_sv" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabsv)/submission" options={{ headerShown: false }} />
+          {/* <Stack.Screen name="(tabsv)/submission" options={{ headerShown: false }} /> */}
+          <Stack.Screen name="(tabsv)/submission[id]" options={{ headerShown: false }} />
+
           <Stack.Screen name="(tabsv)/assignment_sv" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/class_register" options={{ headerShown: false }} />
           <Stack.Screen name="documents-class" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabsv)/notifications_screen" options={{ headerShown: false }} />
+          <Stack.Screen name="documents-class" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabsv)/leave_request" options={{ headerShown: false }} />
 
         </Stack>
       </AuthProvider>

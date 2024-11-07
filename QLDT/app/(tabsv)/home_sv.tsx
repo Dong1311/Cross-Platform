@@ -83,11 +83,12 @@ const Home = () => {
 
       {/* Thanh điều hướng dưới */}
       <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabBarButton}>
+        <TouchableOpacity style={styles.tabBarButton} onPress={()=>router.push('/(tabsv)/notifications_screen')}>
           <Icon name="notifications" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Hoạt động</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}>
+        <TouchableOpacity style={styles.tabBarButton}
+        onPress={()=>router.push('/(tabsv)/leave_request')}>
           <Icon name="chat" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Trò chuyện</Text>
         </TouchableOpacity>

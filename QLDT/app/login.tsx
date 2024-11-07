@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';  // Import useRouter để điều hư�
 
 import styles from '../public/styles/login_style';
 import axios from 'axios';
+import { useAuth } from '../Context/AuthProvider';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ const LoginScreen = () => {
   const [errorMessage, setErrorMessage] = useState('');  // State để lưu lỗi
   const router = useRouter();  // Khởi tạo useRouter
   const deviceId = 1;
+  const { token, saveToken } = useAuth();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -30,6 +32,7 @@ const LoginScreen = () => {
         } else {
           router.push('/home_gv')
         }
+        saveToken(res.data.token)
       } 
     } catch (error) {
       console.log(error)

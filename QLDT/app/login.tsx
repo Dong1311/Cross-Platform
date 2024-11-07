@@ -3,14 +3,9 @@ import {
   View, Text, TextInput, TouchableOpacity, Image, Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';  // Import useRouter để điều hướng
-import { signInWithEmailAndPassword } from 'firebase/auth';  // Import Firebase Auth
-import { doc, getDoc } from 'firebase/firestore'; // Import Firestore để lấy dữ liệu
-import { auth, db } from '../firebase';  // Import Firebase config
-import { collection, query, where, getDocs } from 'firebase/firestore';
-
 import styles from '../public/styles/login_style';
 
-const LoginScreen = () => {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,44 +19,59 @@ const LoginScreen = () => {
   };
 
   // Hàm xử lý đăng nhập
-
   const handleLogin = async () => {
     try {
-      // Đăng nhập với Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Truy vấn để tìm tài liệu người dùng dựa trên thuộc tính uid
-      const q = query(collection(db, 'users'), where('uid', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        querySnapshot.forEach((doc) => {
-          const userData = doc.data();
-          console.log('Thông tin người dùng:', userData);
-          
-          // Kiểm tra role và điều hướng dựa trên role
-          if (userData.role === 'student') {
-            router.push('/homesv');  // Điều hướng đến trang sinh viên
-          } else {
-            router.push('/homesv');  // Điều hướng đến trang khác cho các vai trò khác
-          }
-        });
+      const response = await fetch('http://160.30.168.228:8080/it4788/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          deviceId: 2, 
+        }),
+      });
+  
+      // Kiểm tra nếu phản hồi là JSON
+      const contentType = response.headers.get("content-type");
+      let result;
+  
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
       } else {
-        console.error('Không tìm thấy dữ liệu người dùng');
-        setErrorMessage('Đã xảy ra lỗi khi lấy thông tin người dùng');
+        // Nếu phản hồi không phải JSON, lấy nội dung dưới dạng văn bản
+        const text = await response.text();
+        console.error("Unexpected response format:", text);
+        setErrorMessage("Server returned an unexpected response format. Please try again later.");
+        return;
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(error.message);
-        setErrorMessage('Email hoặc mật khẩu không chính xác');
+  
+      if (!response.ok) {
+        // Nếu phản hồi từ server không thành công, hiển thị thông báo lỗi từ `result.message`
+        setErrorMessage(result.message || `Lỗi server: ${response.status} - ${response.statusText}`);
+        return;
+      }
+  
+      if (result.token) {
+        console.log('Thông tin người dùng:', result);
+  
+        // Kiểm tra role và điều hướng dựa trên role
+        if (result.role === 'STUDENT') {
+          router.push({ pathname: "/(tabsv)/home_sv" });
+        } else if (result.role === 'LECTURER') {
+          router.push({ pathname: "/(tabgv)/home_gv" });
+        }
       } else {
-        console.error('Unknown error occurred');
+        setErrorMessage('Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Login error:', error);
+        setErrorMessage(`Lỗi chi tiết: ${error.message}`);
+      } else {
+        setErrorMessage('Đã xảy ra lỗi không xác định. Vui lòng thử lại.');
       }
     }
   };
-
-  
 
   return (
     <View style={styles.container}>
@@ -160,4 +170,4 @@ const LoginScreen = () => {
   );
 };
 
-export default LoginScreen;
+export default Login;

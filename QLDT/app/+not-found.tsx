@@ -16,6 +16,9 @@ export default function NotFoundScreen() {
         <Link href="/home_sv" style={styles.link}>
           <ThemedText type="link">Go to home sinh vien!</ThemedText>
         </Link>
+        <Link href="/sign-up" style={styles.link}>
+          <ThemedText type="link">Go to Sign up page!</ThemedText>
+        </Link>
       </ThemedView>
     </>
   );

@@ -161,7 +161,7 @@ const CreateClass: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: '#b71c1c',
     flexGrow: 1,
     justifyContent: 'center',
   },
@@ -183,7 +183,6 @@ const styles = StyleSheet.create({
     padding:20,
     flexDirection: 'column',
     justifyContent: 'space-between',
-    marginBottom: 20,
     backgroundColor: '#ffff',
   },
   headerText: {

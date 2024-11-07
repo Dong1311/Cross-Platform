@@ -31,14 +31,14 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack initialRouteName="home_gv" >
+      <Stack initialRouteName="(tabgv)/home_gv" >
         {/* Đặt màn hình mặc định */}
         
         <Stack.Screen name="sign-up" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
-        <Stack.Screen name="documemts-class" options={{ headerShown: false }}/>
-
+        <Stack.Screen name="GetVerifyCode" options={{ headerShown: false }} />
+        <Stack.Screen name="CheckVerifyCode" options={{ headerShown: false }} />
 
         {/* <Stack.Screen name="(tabgv)" options={{ headerShown: false }} /> */}
         <Stack.Screen name="(tabgv)/home_gv" options={{ headerShown: false }} />

@@ -181,7 +181,7 @@ const ClassRegistration = () => {
       alert('Đã xảy ra lỗi khi xóa');
     } finally {
       setDeleteModalVisible(false);
-      setSelectedClass(null); // Reset lại lựa chọn lớp sau khi xóa
+      setSelectedClass(null); 
     }
   };
 

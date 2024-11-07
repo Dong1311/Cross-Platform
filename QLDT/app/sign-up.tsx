@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
-import { createUserWithEmailAndPassword } from 'firebase/auth';  // Firebase Auth
-import { collection, addDoc } from 'firebase/firestore';  // Firestore cho việc lưu thông tin người dùng
-import { auth, db } from '../firebase';  // Firebase config
 import styles from '../public/styles/sign-up_style';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { Link } from 'expo-router';
 
 interface Errors {
   firstName?: string;
@@ -21,7 +19,6 @@ type RootStackParamList = {
   home: undefined;
 };
 
-// Khai báo kiểu của navigation
 type NavigationProp = StackNavigationProp<RootStackParamList, 'sign-up'>;
 
 const SignUpScreen = () => {
@@ -31,39 +28,39 @@ const SignUpScreen = () => {
   const [password, setPassword] = useState<string>('');
   const [role, setRole] = useState<string | null>(null);
   const [errors, setErrors] = useState<Errors>({});
-  const [successMessage, setSuccessMessage] = useState<string>(''); // State để thông báo thành công
-  // const navigation = useNavigation();
-  const navigation = useNavigation<NavigationProp>();  
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const navigation = useNavigation<NavigationProp>();
 
   const validateFields = () => {
     let valid = true;
     let newErrors: Errors = {};
-
+  
     if (!firstName) {
       newErrors.firstName = 'Vui lòng nhập tên';
       valid = false;
     }
-
+  
     if (!lastName) {
       newErrors.lastName = 'Vui lòng nhập họ';
       valid = false;
     }
-
-    if (!email || !email.includes('@')) {
-      newErrors.email = 'Email không hợp lệ';
+  
+    if (!email || !email.includes('@') || 
+        (!email.endsWith('@hust.edu.vn') && !email.endsWith('@soict.hust.edu.vn'))) {
+      newErrors.email = 'Email không hợp lệ. Vui lòng sử dụng email @hust.edu.vn hoặc @soict.hust.edu.vn';
       valid = false;
     }
-
+  
     if (password.length < 6) {
       newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
       valid = false;
     }
-
+  
     if (!role) {
       newErrors.role = 'Vui lòng chọn vai trò';
       valid = false;
     }
-
+  
     setErrors(newErrors);
     return valid;
   };
@@ -71,45 +68,47 @@ const SignUpScreen = () => {
   const handleSignUp = async () => {
     if (validateFields()) {
       try {
-        // Đăng ký người dùng với Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        // Lưu thông tin người dùng vào Firestore (tuỳ chọn)
-        await addDoc(collection(db, 'users'), {
-          uid: user.uid,
-          firstName: firstName,
-          lastName: lastName,
+        const userData = {
+          ho: lastName,
+          ten: firstName,
           email: email,
-          role: role,
+          password: password,
+          uuid: 131103, // Sử dụng UUID cố định
+          role: role?.toUpperCase()
+        };
+  
+        console.log("UUID đã gửi:", userData.uuid);  // In UUID ra console để theo dõi
+  
+        const response = await fetch('http://160.30.168.228:8080/it4788/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(userData)
         });
-
-        setSuccessMessage('Đăng ký thành công!'); // Thông báo thành công
-        console.log('User đăng ký thành công: ', user.email);
-      } catch (error: any) {
-        let newErrors: Errors = {};
-        switch (error.code) {
-          case 'auth/email-already-in-use':
-            newErrors.email = 'Email này đã được sử dụng';
-            break;
-          case 'auth/invalid-email':
-            newErrors.email = 'Email không hợp lệ';
-            break;
-          case 'auth/weak-password':
-            newErrors.password = 'Mật khẩu quá yếu';
-            break;
-          default:
-            newErrors.email = 'Đã xảy ra lỗi. Vui lòng thử lại';
+  
+        const responseText = await response.text();
+        console.log("Response text:", responseText);
+  
+        if (response.ok) {
+          const result = JSON.parse(responseText);
+          setSuccessMessage('Đăng ký thành công!');
+          console.log('User đăng ký thành công:', result);
+        } else {
+          let newErrors: Errors = {};
+          newErrors.email = responseText;
+          setErrors(newErrors);
         }
-        setErrors(newErrors);
+      } catch (error) {
+        setErrors({ email: 'Không thể kết nối tới server. Vui lòng thử lại sau.' });
+        console.error('Error during signup:', error);
       }
     }
   };
+  
 
   return (
-
     <View style={styles.container}>
-      
       <Image source={require('../assets/images/logohust_2.png')} style={styles.logo} />
       <Text style={styles.title}>Welcome to AllHust</Text>
 
@@ -117,8 +116,8 @@ const SignUpScreen = () => {
         <View style={styles.nameContainer}>
           <TextInput
             style={[
-              styles.input, 
-              styles.halfInput, 
+              styles.input,
+              styles.halfInput,
               !!errors.lastName ? styles.errorInput : null
             ]}
             placeholder="Họ"
@@ -127,8 +126,8 @@ const SignUpScreen = () => {
           />
           <TextInput
             style={[
-              styles.input, 
-              styles.halfInput, 
+              styles.input,
+              styles.halfInput,
               !!errors.firstName ? styles.errorInput : null
             ]}
             placeholder="Tên"
@@ -162,8 +161,8 @@ const SignUpScreen = () => {
         <RNPickerSelect
           onValueChange={(value) => setRole(value)}
           items={[
-            { label: 'Giảng viên (Lecturer)', value: 'lecturer' },
-            { label: 'Sinh viên (Student)', value: 'student' },
+            { label: 'Giảng viên (Lecturer)', value: 'LECTURER' },
+            { label: 'Sinh viên (Student)', value: 'STUDENT' },
           ]}
           placeholder={{ label: "Role", value: null }}
           style={{
@@ -191,9 +190,14 @@ const SignUpScreen = () => {
         
         {successMessage ? <Text style={{ color: 'green', marginTop: 20 }}>{successMessage}</Text> : null}
 
-        <TouchableOpacity onPress={() => navigation.navigate('login')}>
-          <Text style={styles.loginText}>Hoặc đăng nhập với username/password</Text>
-        </TouchableOpacity>
+        <View style={styles.centeredLinksContainer}>
+          <Link href="/login">
+            <Text style={[styles.loginText, styles.linkSpacing]}>Hoặc đăng nhập với username/password</Text>
+          </Link>
+          <Link href="/GetVerifyCode">
+            <Text style={[styles.loginText, styles.linkSpacing]}>Get verify code</Text>
+          </Link>
+        </View>
       </View>
     </View>
   );

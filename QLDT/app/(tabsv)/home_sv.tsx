@@ -26,6 +26,10 @@ const Home = () => {
     fetchClassList();
   }, []);
 
+  const handleClassPress = (classId: string) => {
+    router.push({ pathname: 'class_detail', params: { classId } });
+  };
+
   const fetchClassList = async () => {
     try {
       const response = await axios.post('http://160.30.168.228:8080/it5023e/get_class_list', {
@@ -45,15 +49,17 @@ const Home = () => {
   };
 
   const renderItem = ({ item }: { item: ClassItem }) => (
-    <View style={styles.classContainer}>
-      <View style={[styles.classIcon, { backgroundColor: getRandomColor() }]}>
-        <Text style={styles.classCode}>{item.class_type}</Text>
+    <TouchableOpacity onPress={() => handleClassPress(item.class_id)}>
+      <View style={styles.classContainer}>
+        <View style={[styles.classIcon, { backgroundColor: getRandomColor() }]}>
+          <Text style={styles.classCode}>{item.class_type}</Text>
+        </View>
+        <View style={styles.classInfo}>
+          <Text style={styles.classTitle}>{item.class_name}</Text>
+          <Text style={styles.classTeacher}>{item.lecturer_name}</Text>
+        </View>
       </View>
-      <View style={styles.classInfo}>
-        <Text style={styles.classTitle}>{item.class_name}</Text>
-        <Text style={styles.classTeacher}>{item.lecturer_name}</Text>
-      </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const getRandomColor = () => {

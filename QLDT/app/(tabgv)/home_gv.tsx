@@ -137,10 +137,10 @@ const Home = () => {
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}>
+        {/* <TouchableOpacity style={styles.tabBarButton}>
           <Icon name="calendar-today" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Lịch</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity style={styles.tabBarButton} onPress={()=> router.push('/attendance')}>
           <Icon name="checklist" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Điểm danh</Text>

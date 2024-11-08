@@ -60,7 +60,6 @@ export default function RootLayout() {
           <Stack.Screen name="(tabsv)/class_register" options={{ headerShown: false }} />
           <Stack.Screen name="documents-class" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/notifications_screen" options={{ headerShown: false }} />
-          <Stack.Screen name="documents-class" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/leave_request" options={{ headerShown: false }} />
 
         </Stack>

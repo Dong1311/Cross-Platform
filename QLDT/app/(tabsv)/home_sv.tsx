@@ -1,47 +1,61 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icons from '@expo/vector-icons/MaterialCommunityIcons';
+import axios from 'axios';
 import { Link, useRouter } from 'expo-router';
 
+interface ClassItem {
+  class_id: string;
+  class_name: string;
+  attached_code: string | null;
+  class_type: string;
+  lecturer_name: string;
+  student_count: number;
+  start_date: string;
+  end_date: string;
+  status: string;
+}
+
 const Home = () => {
-  // State để quản lý danh sách lớp học và tìm kiếm
   const [search, setSearch] = useState('');
-  const router = useRouter(); 
+  const [classes, setClasses] = useState<ClassItem[]>([]); 
+  const router = useRouter();
 
-  interface ClassItem {
-    id: string;
-    code: string;
-    title: string;
-    teacher: string;
-  }
+  useEffect(() => {
+    fetchClassList();
+  }, []);
 
-  
-  // Giả định danh sách lớp học
-  const classes = [
-    { id: '1', code: 'IL', title: '154055 - IT4931 - Lưu trữ và xử lý dữ liệu', teacher: 'Tran The Hung' },
-    { id: '2', code: 'NK', title: '2(2-1-0-4) Nhập môn Khoa học dữ liệu', teacher: 'Pham Van Hai' },
-    { id: '3', code: 'TC', title: '20241 - Thuật toán ứng dụng', teacher: 'Nguyen Huu Duc' },
-    { id: '4', code: '2T', title: '20241 - Tính toán tiến hóa', teacher: 'Huynh Thi Thanh Binh' },
-    { id: '5', code: 'IW', title: '20241. IT4409. Web', teacher: 'Trinh Anh Phuc' },
-    { id: '6', code: 'HI', title: 'Học sâu và ứng dụng', teacher: 'Trinh Anh Phuc' },
-  ];
+  const fetchClassList = async () => {
+    try {
+      const response = await axios.post('http://160.30.168.228:8080/it5023e/get_class_list', {
+        token: "ad69Nl",
+        role: "STUDENT",
+        account_id: "157"
+      });
 
-  // Hàm để render từng phần tử trong danh sách lớp
+      if (response.data.meta.code === 1000) {
+        setClasses(response.data.data);
+      } else {
+        console.error("Failed to fetch classes:", response.data.meta.message);
+      }
+    } catch (error) {
+      console.error("Error fetching class list:", error);
+    }
+  };
+
   const renderItem = ({ item }: { item: ClassItem }) => (
     <View style={styles.classContainer}>
       <View style={[styles.classIcon, { backgroundColor: getRandomColor() }]}>
-        <Text style={styles.classCode}>{item.code}</Text>
+        <Text style={styles.classCode}>{item.class_type}</Text>
       </View>
       <View style={styles.classInfo}>
-        <Text style={styles.classTitle}>{item.title}</Text>
-        <Text style={styles.classTeacher}>{item.teacher}</Text>
+        <Text style={styles.classTitle}>{item.class_name}</Text>
+        <Text style={styles.classTeacher}>{item.lecturer_name}</Text>
       </View>
     </View>
   );
-  
 
-  // Hàm để sinh màu ngẫu nhiên cho các biểu tượng lớp
   const getRandomColor = () => {
     const colors = ['#FF5252', '#FF9800', '#3F51B5', '#9C27B0', '#00BCD4', '#009688'];
     return colors[Math.floor(Math.random() * colors.length)];
@@ -49,7 +63,6 @@ const Home = () => {
 
   return (
     <View style={styles.container}>
-      {/* Phần tìm kiếm */}
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
           <Text style={styles.avatarText}>V2</Text>
@@ -60,7 +73,6 @@ const Home = () => {
         </Link>
       </View>
 
-      {/* Thanh tìm kiếm */}
       <View style={styles.searchContainer}>
         <Icon name="search" size={24} color="gray" />
         <TextInput
@@ -71,24 +83,21 @@ const Home = () => {
         />
       </View>
 
-      {/* Danh sách lớp học */}
       <Text style={styles.sectionTitle}>Lớp học</Text>
-      <FlatList<ClassItem>
+      <FlatList
         data={classes.filter((cls) =>
-          cls.title.toLowerCase().includes(search.toLowerCase())
+          cls.class_name.toLowerCase().includes(search.toLowerCase())
         )}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.class_id}
       />
 
-      {/* Thanh điều hướng dưới */}
       <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabBarButton} onPress={()=>router.push('/(tabsv)/notifications_screen')}>
+        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/(tabsv)/notifications_screen')}>
           <Icon name="notifications" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Hoạt động</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}
-        onPress={()=>router.push('/(tabsv)/leave_request')}>
+        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/(tabsv)/leave_request')}>
           <Icon name="chat" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Trò chuyện</Text>
         </TouchableOpacity>
@@ -96,22 +105,15 @@ const Home = () => {
           <Icon name="group" size={24} color="purple" />
           <Text style={[styles.tabBarLabel, { color: 'purple' }]}>Nhóm</Text>
         </TouchableOpacity>
-        {/* <Link href="/assignment_sv" style={{ zIndex: 10 }}>
-          <TouchableOpacity style={styles.tabBarButton}>
-            <Icon name="assignment" size={24} color="black" />
-            <Text style={styles.tabBarLabel}>Bài tập</Text>
-          </TouchableOpacity>
-        </Link> */}
-        {/* <TouchableOpacity style={styles.tabBarButton}> */}
-        <TouchableOpacity style={styles.tabBarButton} onPress={()=>router.push('/(tabsv)/assignment_sv')}>
+        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/(tabsv)/assignment_sv')}>
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}  >
+        <TouchableOpacity style={styles.tabBarButton}>
           <Icon name="calendar-today" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Lịch</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton} onPress={()=>router.push('/documents-class')}>
+        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/documents-class')}>
           <Icons name="file-document-multiple" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Tài liệu</Text>
         </TouchableOpacity>
@@ -131,6 +133,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 20,
+    marginTop: 20,
     backgroundColor: 'white',
   },
   avatarContainer: {
@@ -147,7 +150,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   headerTitle: {
-    marginTop:50,
     fontSize: 22,
     fontWeight: 'bold',
   },
@@ -171,10 +173,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 10,
     fontWeight: 'bold',
-  },
-  classList: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
   },
   classContainer: {
     flexDirection: 'row',
@@ -219,7 +217,7 @@ const styles = StyleSheet.create({
   },
   tabBarButton: {
     alignItems: 'center',
-    flex:1
+    flex: 1,
   },
   tabBarLabel: {
     marginTop: 4,

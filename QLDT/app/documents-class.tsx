@@ -12,29 +12,28 @@ import {
   TouchableWithoutFeedback,
   Pressable,
   StatusBar,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as DocumentPicker from "expo-document-picker"; 
-import axios from "axios"; 
-import { router, Stack } from "expo-router";
+import * as DocumentPicker from "expo-document-picker";
+import axios from "axios";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const API_URL = "https://6705494f031fd46a830f6626.mockapi.io/ehust/documents"; 
+import { useAuth } from "@/Context/AuthProvider";
 
 export default function App() {
-
-  const [documents, setDocuments] = useState<Documents[]>([]); 
-  const [modalVisible, setModalVisible] = useState(false); 
-  const [selectedDocument, setSelectedDocument] = useState<Documents>(); 
-  const [newDocumentName, setNewDocumentName] = useState(""); 
-  const [loading, setLoading] = useState(true); 
-  const [error, setError] = useState(""); 
+  const [documents, setDocuments] = useState<Documents[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Documents>();
+  const [newDocumentName, setNewDocumentName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const { classId, token } = useAuth();
 
   interface Documents {
-    id: string;
-    name: string;
-    uri: string;
-    type: string;
+    id: number;
+    class_id: string;
+    material_name: string;
   }
 
   useEffect(() => {
@@ -43,23 +42,29 @@ export default function App() {
 
   const fetchDocuments = async () => {
     try {
-      setLoading(true); 
-      const response = await axios.get(API_URL);
-      setDocuments(response.data); 
+      setLoading(true);
+
+      const response = await axios.get(
+        "http://160.30.168.228:8080/it5023e/get_material_list",
+        { params: { token, class_id: classId } }
+      );
+
+      setDocuments(response.data.data);
     } catch (err) {
       setError("Failed to load documents");
+      console.log(err);
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
   interface Document {
     id: string;
-    name: string;
+    material_name: string;
   }
   const openModal = (document: Document) => {
     setSelectedDocument(document);
-    setNewDocumentName(document.name);
+    setNewDocumentName(document.material_name);
     setModalVisible(true);
   };
 
@@ -69,34 +74,39 @@ export default function App() {
   };
 
   const confirmDelete = () => {
-    Alert.alert('Xác nhận','Bạn có muốn xóa không ?',[
+    Alert.alert(
+      "Xác nhận",
+      "Bạn có muốn xóa không ?",
+      [
+        {
+          text: "Hủy",
+          onPress: () => closeModal(),
+          style: "cancel",
+        },
+        {
+          text: "Xóa",
+          onPress: () => handleDeleteDocument(),
+          style: "destructive",
+        },
+      ],
       {
-        text: 'Hủy',
-        onPress: () => closeModal(),
-        style: 'cancel',
-      },
-      {
-        text: 'Xóa',
-        onPress: () => handleDeleteDocument(),
-        style: 'destructive',
-      },
-    ],
-    {
-      cancelable: true,
-    }
-  )
-  }
+        cancelable: true,
+      }
+    );
+  };
 
   const handleDeleteDocument = async () => {
     if (selectedDocument) {
       try {
-        await axios.delete(`${API_URL}/${selectedDocument.id}`);
-        setDocuments((prevDocuments) =>
-          prevDocuments.filter((doc : Documents) => doc.id !== selectedDocument.id)
-        );
+        await axios.post("http://160.30.168.228:8080/it5023e/delete_material", {
+          token,
+          material_id: selectedDocument.id,
+        });
+        fetchDocuments();
         closeModal();
       } catch (err) {
         Alert.alert("Error", "Failed to delete document");
+        console.log("error delete : " + err);
       }
     }
   };
@@ -104,17 +114,21 @@ export default function App() {
   const handleEditDocumentName = async () => {
     if (selectedDocument) {
       try {
-        const updatedDocument = { ...selectedDocument, name: newDocumentName };
-        await axios.put(`${API_URL}/${selectedDocument.id}`, updatedDocument); 
 
-        setDocuments((prevDocuments) =>
-          prevDocuments.map((doc) =>
-            doc.id === selectedDocument.id ? updatedDocument : doc
-          )
-        );
-        closeModal(); 
+        const updatedDocument = {
+          materialId : selectedDocument.id,
+          title: newDocumentName,
+          token: token,
+        };
+
+        console.log(updatedDocument)
+        await axios.post(`http://160.30.168.228:8080/it5023e/edit_material`, updatedDocument);
+
+        fetchDocuments();
+        closeModal();
       } catch (err) {
         Alert.alert("Error", "Failed to update document name");
+        console.log('error_edit : ' + err)
       }
     }
   };
@@ -125,109 +139,148 @@ export default function App() {
 
       if (!result.canceled) {
         // Upload the document file to the server
-        const formData = {
+        let formdata = new FormData();
+        formdata.append("token", token);
+        formdata.append("classId", classId);
+        formdata.append("title", result.assets[0].name);
+        formdata.append("description", result.assets[0].name);
+        formdata.append("materialType", result.assets[0].mimeType);
+        formdata.append("file", {
           uri: result.assets[0].uri,
-          name: result.assets[0].name,
           type: result.assets[0].mimeType,
-        };
-
-        const response = await axios.post(API_URL, JSON.stringify(formData), {
-          headers: { "Content-Type": "application/json" },
+          name: result.assets[0].name,
         });
 
-        setDocuments([...documents, response.data]);
-        Alert.alert("Success","Upload file thành công")
+        const response = await axios.post(
+          "http://160.30.168.228:8080/it5023e/upload_material",
+          formdata,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        if (response.data.code === 1000) {
+          // setDocuments([...documents, response.data]);
+          fetchDocuments();
+          Alert.alert("Success", "Upload file thành công");
+        }
       }
     } catch (err) {
       Alert.alert("Error", "Upload file thất bại");
+      console.log("uploadfile: " + err);
     }
   };
 
-  const renderItem = ({ item } : {item : Documents}) => (
-    <View style={styles.itemContainer}>
+  const handleOpenFile = async (id) => {
+    try {
+      const res = await axios.get(
+        "http://160.30.168.228:8080/it5023e/get_material_info",
+        { params: { token, material_id: id } }
+      );
+      if (res.data.code === 1000) {
+        Linking.openURL(res.data.data.material_link);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Lỗi khi mở file");
+    }
+  };
+
+  const renderItem = ({ item }: { item: Documents }) => (
+    <TouchableOpacity
+      onPress={() => handleOpenFile(item.id)}
+      style={styles.itemContainer}
+    >
       <Ionicons name="document" size={24} color="blue" />
-      <Text style={styles.documentName}>{item.name}</Text>
+      <Text style={styles.documentName}>{item.material_name}</Text>
       <TouchableOpacity
         style={styles.moreButton}
         onPress={() => openModal(item)}
       >
         <Ionicons name="ellipsis-horizontal" size={24} color="gray" />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
-  
 
   return (
     <>
-    <StatusBar backgroundColor="#d32f2f" barStyle="light-content" />
-    <SafeAreaView style={styles.container}>
-      <View style={styles.navBar}>
-        <TouchableOpacity onPress={()=>{router.back()}}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.navTitle}>Tài liệu học tập</Text>
-        <TouchableOpacity onPress={handleUploadDocument}>
-          <Ionicons name="add" size={28} color="white" />
-        </TouchableOpacity>
-      </View>
+      <StatusBar backgroundColor="#d32f2f" barStyle="light-content" />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.navBar}>
+          <TouchableOpacity
+            onPress={() => {
+              router.back();
+            }}
+          >
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.navTitle}>Tài liệu học tập</Text>
+          <TouchableOpacity onPress={handleUploadDocument}>
+            <Ionicons name="add" size={28} color="white" />
+          </TouchableOpacity>
+        </View>
 
-      {/* Show loading or error state */}
-      {loading ? (
-        <ActivityIndicator size="large" color="#d32f2f" />
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : (
-        <FlatList
-          data={documents}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContainer}
-        />
-      )}
+        {/* Show loading or error state */}
+        {loading ? (
+          <ActivityIndicator size="large" color="#d32f2f" />
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : (
+          <FlatList
+            data={documents}
+            keyExtractor={(item) => "" + item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={
+              <Text
+                style={{ textAlign: "center", marginTop: 10, fontSize: 16 }}
+              >
+                Không có tài liệu nào
+              </Text>
+            }
+          />
+        )}
 
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        animationType="slide"
-        onRequestClose={closeModal}
-      >
-        <TouchableWithoutFeedback onPress={closeModal}>
-          <View style={styles.modalBackground}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalContainer}>
-                <Text style={styles.modalTitle}>Chỉnh sửa tài liệu</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newDocumentName}
-                  onChangeText={setNewDocumentName}
-                />
+        <Modal
+          transparent={true}
+          visible={modalVisible}
+          animationType="slide"
+          onRequestClose={closeModal}
+        >
+          <TouchableWithoutFeedback onPress={closeModal}>
+            <View style={styles.modalBackground}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.modalTitle}>Chỉnh sửa tài liệu</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={newDocumentName}
+                    onChangeText={setNewDocumentName}
+                  />
 
-                <Pressable
-                  style={styles.modalButton}
-                  onPress={handleEditDocumentName}
-                >
-                  <Text style={styles.modalButtonText}>Lưu</Text>
-                </Pressable>
+                  <Pressable
+                    style={styles.modalButton}
+                    onPress={handleEditDocumentName}
+                  >
+                    <Text style={styles.modalButtonText}>Lưu</Text>
+                  </Pressable>
 
-                <Pressable
-                  style={styles.modalButton}
-                  onPress={confirmDelete}
-                >
-                  <Text style={styles.modalButtonText}>Xóa</Text>
-                </Pressable>
+                  <Pressable style={styles.modalButton} onPress={confirmDelete}>
+                    <Text style={styles.modalButtonText}>Xóa</Text>
+                  </Pressable>
 
-                <Pressable
-                  style={[styles.modalButton, { backgroundColor: "#d32f2f" }]}
-                  onPress={closeModal}
-                >
-                  <Text style={styles.modalButtonText}>Thoát</Text>
-                </Pressable>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    </SafeAreaView>
+                  <Pressable
+                    style={[styles.modalButton, { backgroundColor: "#d32f2f" }]}
+                    onPress={closeModal}
+                  >
+                    <Text style={styles.modalButtonText}>Thoát</Text>
+                  </Pressable>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      </SafeAreaView>
     </>
   );
 }
@@ -265,8 +318,8 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   errorText: {
-    color: 'red',
-    textAlign: 'center',
+    color: "red",
+    textAlign: "center",
     marginTop: 20,
   },
   moreButton: {
@@ -311,7 +364,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    borderColor: 'gray',
+    borderColor: "gray",
     borderWidth: 1,
     marginBottom: 15,
     paddingHorizontal: 10,

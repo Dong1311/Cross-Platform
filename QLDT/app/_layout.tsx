@@ -33,7 +33,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <Stack initialRouteName="home_gv" >
+        <Stack >
           {/* Đặt màn hình mặc định */}
           
           <Stack.Screen name="sign-up" options={{ headerShown: false }} />
@@ -48,6 +48,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabgv)/create_class" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/attendance" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/absence_list" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabgv)/class_detail" options={{ headerShown: false }} />
 
           {/* <Stack.Screen name="(tabsv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabsv)/home_sv" options={{ headerShown: false }} />

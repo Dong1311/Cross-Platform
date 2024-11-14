@@ -1,50 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Link, router } from 'expo-router';
 import attendance from './attendance';
+import axios from 'axios';
+import { useAuth } from '@/Context/AuthProvider';
 
 const Home = () => {
   // State để quản lý danh sách lớp học và tìm kiếm
   const [search, setSearch] = useState('');
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true); // State để quản lý trạng thái loading
+  const {token, role, accountId} = useAuth();
+
 
   interface ClassItem {
-    classId: string;
-    courseId: string;
-    className: string;
-    lecturerId: string;
-    code: string; // Thêm trường code
+    class_id: string,
+    class_name: string,
+    attached_code: string,
+    class_type: string,
+    lecturer_name: string,
+    student_count: number,
+    start_date: string,
+    end_date: string,
+    status: string,
   }
 
-  // Hàm để tạo mã ngẫu nhiên
-  const generateRandomCode = () => {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const numbers = '0123456789';
-    const isTwoLetters = Math.random() < 0.5; // 50% xác suất là hai chữ cái
-    if (isTwoLetters) {
-      return letters.charAt(Math.floor(Math.random() * letters.length)) +
-             letters.charAt(Math.floor(Math.random() * letters.length));
-    } else {
-      return numbers.charAt(Math.floor(Math.random() * numbers.length)) +
-             letters.charAt(Math.floor(Math.random() * letters.length));
-    }
-  };
-
-  // Hàm để lấy dữ liệu từ API và thêm mã code ngẫu nhiên
+  // Hàm để lấy dữ liệu từ API 
   const fetchClasses = async () => {
     try {
-      const response = await fetch('https://6706925aa0e04071d2276c8e.mockapi.io/tailieuhoctap/class');
-      const data = await response.json();
-      console.log(data);
-      // Thêm mã code ngẫu nhiên cho mỗi lớp
-      const updatedClasses = data.map((cls: ClassItem) => ({
-        ...cls,
-        code: generateRandomCode(), // Thêm mã ngẫu nhiên cho mỗi lớp
-      }));
-      setClasses(updatedClasses);
-      setLoading(false);
+
+      const res = await axios.post('http://160.30.168.228:8080/it5023e/get_class_list', {token, role, account_id : accountId});
+
+      if(res.status === 200){
+        setClasses(res.data.data);
+        setLoading(false);
+      }
     } catch (error) {
       console.error("Error fetching classes:", error);
       setLoading(false);
@@ -54,19 +45,23 @@ const Home = () => {
   // useEffect để gọi hàm fetchClasses khi component được render lần đầu
   useEffect(() => {
     fetchClasses();
-  }, []);
+  },[]);
 
   // Hàm để render từng phần tử trong danh sách lớp
   const renderItem = ({ item }: { item: ClassItem }) => (
     <TouchableOpacity style={styles.classContainer}>
-      <Link href="/edit_class">
-        <View style={styles.classContainer}>
+      <Link  href={{  
+          pathname: '/class_detail',   
+          params: item 
+        }}  
+       style={{width: '100%'}}>
+        <View style={styles.classBody}>
           <View style={[styles.classIcon, { backgroundColor: getRandomColor() }]}>
-            <Text style={styles.classCode}>{item.code}</Text> 
+            <Text style={styles.classCode}>{item.class_id.slice(4,6)}</Text> 
           </View>
           <View style={styles.classInfo}>
-            <Text style={styles.classTitle}>{item.className}</Text>
-            <Text style={styles.classTeacher}>{item.lecturerId}</Text>
+            <Text style={styles.classTitle}>{item.class_name}</Text>
+            <Text style={styles.classTeacher}>{item.lecturer_name}</Text>
           </View>
         </View>
       </Link>
@@ -85,7 +80,7 @@ const Home = () => {
       {/* Phần tìm kiếm */}
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>V2</Text>
+          <Image style={styles.avatar} source ={ require('../../assets/images/user.png') } />
         </View>
         <Text style={styles.headerTitle}>Nhóm</Text>
         <Link href="/create_class">
@@ -112,10 +107,10 @@ const Home = () => {
       ) : (
         <FlatList
           data={classes.filter((cls) =>
-            cls.className.toLowerCase().includes(search.toLowerCase())
+            cls.class_name.toLowerCase().includes(search.toLowerCase())
           )}
           renderItem={renderItem}
-          keyExtractor={(item) => item.classId}
+          keyExtractor={(item) => item.class_id}
         />
       )}
 
@@ -140,14 +135,6 @@ const Home = () => {
         <TouchableOpacity style={styles.tabBarButton}>
           <Icon name="calendar-today" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Lịch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton} onPress={()=> router.push('/attendance')}>
-          <Icon name="checklist" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Điểm danh</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton} onPress={()=> router.push('/(tabgv)/absence_list')}>
-          <Icon name="checklist" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Ds xin vắng</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -175,10 +162,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  avatar : {
+    width: 40,
+    height: 40,
   },
   headerTitle: {
     marginTop:50,
@@ -217,6 +203,20 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     padding: 16,
     alignItems: 'center',
+    width: '96%',
+    margin: 'auto',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  classBody: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    padding: 16,
+    alignItems: 'center',
+    width: '100%',
   },
   classIcon: {
     width: 50,
@@ -252,6 +252,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
   },
   tabBarButton: {
+    flex: 1,
     alignItems: 'center',
   },
   tabBarLabel: {

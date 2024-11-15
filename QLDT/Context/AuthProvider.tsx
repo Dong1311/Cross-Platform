@@ -6,6 +6,9 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
+  const [role, setRole] = useState(null);
+  const [accountId, setAccountId] = useState(null);
+  const [classId, setClassId] = useState(null);
 
   // Hàm lưu token và lưu vào SecureStore
   const saveToken = async (newToken) => {
@@ -25,8 +28,13 @@ export const AuthProvider = ({ children }) => {
     await SecureStore.deleteItemAsync('userToken');
   };
 
+
+  const value = {
+    token,role,accountId,classId, setClassId, setRole, setAccountId, saveToken, loadToken, deleteToken,
+  }
+
   return (
-    <AuthContext.Provider value={{ token, saveToken, loadToken, deleteToken }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

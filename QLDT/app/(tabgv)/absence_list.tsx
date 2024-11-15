@@ -1,39 +1,51 @@
-import { FlatList, Image, Modal, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import { Alert, FlatList, Image, Modal, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-
-const absenceList = [
-  {
-    id : '1' ,
-    title : 'Đơn xin phép vắng học',
-    name : 'Nguyễn Văn An',
-    mssv : '20216666',
-    class : '145890',
-    date : '2024-10-30',
-    cause : ' Lorem ipsum dolor sit amet consectetur adipisicing elit. Fugit totam voluptas quaerat officia quod atque facere mollitia, libero eveniet hic eius sed vero sint voluptatum blanditiis est dolorum, labore ad.',
-    image : 'https://cdn.tuoitre.vn/thumb_w/480/471584752817336320/2023/4/1/gia-mao-giay-nhap-vien-bv-cho-ray-16803195393581042405086.jpeg'
-  },
-  {
-    id : '2' ,
-    title : 'Đơn xin phép vắng học',
-    name : 'Nguyễn Văn An',
-    mssv : '20216666',
-    class : '145890',
-    date : '2024-10-30',
-    cause : 'lí do em xin nghỉ buổi học là do em bị ốm',
-    image : 'https://cdn.lawnet.vn/uploads/phapluat/NHUTHAO/con-om.jpg'
-  },
-]
+import axios from 'axios'
+import { useAuth } from "@/Context/AuthProvider";
+import { Picker } from '@react-native-picker/picker'
 
 const AbsenceList = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState<absenceData>({});
+  const [absenceList, setAbsenceList] = useState([]);
+  const {token, classId} = useAuth();
+  const [status, setStatus] = useState('PENDING')
+
+  interface absenceData {
+    id: number;
+    student_account: StudentAccount;
+    absence_date: Date;
+    title: string;
+    reason: string;
+    status: string;
+    file_url: null;
+  }
+
+  interface StudentAccount {
+    account_id: number;
+    last_name: string;
+    first_name: string;
+    email: string;
+    student_id: number;
+  }
+
+  const fetchAbsenceList = async () => {
+    try {
+      const res = await axios.post('http://160.30.168.228:8080/it5023e/get_absence_requests', {token, class_id : classId, status });
+      if(res.status === 200) {
+        setAbsenceList(res.data.data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
 
-  const openModal = (item) => {
+  const openModal = (item : absenceData) => {
     setModalVisible(true);
     setSelected(item);
   }
@@ -43,23 +55,48 @@ const AbsenceList = () => {
     setModalVisible(false);
   }
 
-  const handleAgree = (selected) => {
-    console.log('Agree' + selected.id);
-    setModalVisible(false);
+  const handleAgree = async (selected : absenceData) => {
+    try {
+      const res = await axios.post('http://160.30.168.228:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'ACCEPTED'});
+      if(res.status === 200) {
+        Alert.alert('Hoàn Thành', 'đồng ý đơn xin nghỉ thành công')
+        fetchAbsenceList();
+        setModalVisible(false);
+      }
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Thất bại', 'có lỗi sảy ra, hãy thử lại')
+    }
+    
   }
   
-  const handleRefuse = (selected) => {
-    console.log('Refuse' + selected.id);
-    setModalVisible(false);
+  const handleRefuse = async (selected : absenceData) => {
+    try {
+      const res = await axios.post('http://160.30.168.228:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'REJECTED'});
+      if(res.status === 200) {
+        Alert.alert('Hoàn Thành', 'Từ chối đơn xin nghỉ thành công')
+        fetchAbsenceList();
+        setModalVisible(false);
+      }
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Thất bại', 'có lỗi sảy ra, hãy thử lại')
+    }
   }
 
-  const AbsenceItem = ({item}) => {
+  useEffect(() => {
+    fetchAbsenceList();
+  },[status])
+
+  const AbsenceItem = ({item} : {item : absenceData}) => {
     return (
       <View style={styles.itemContainer}>
         <View>
-          <Text style={styles.itemTitle}>{item.title}</Text>
-          <Text style={styles.itemsup}>{`${item.name} - ${item.mssv}`}</Text>
-          <Text style={styles.itemsup}>{`Ngày vắng: ${item.date}`}</Text>
+          <Text style={styles.itemTitle}>
+            { item.title || 'Đơn xin nghỉ học' } 
+          </Text>
+          <Text style={styles.itemsup}>{`${item.student_account.first_name} ${item.student_account.last_name} - ${item.student_account.student_id}`}</Text>
+          <Text style={styles.itemsup}>{`Ngày vắng: ${item.absence_date}`}</Text>
         </View>
 
         <TouchableOpacity onPress={() => openModal(item)}>
@@ -71,65 +108,96 @@ const AbsenceList = () => {
 
   return (
     <>
-     <StatusBar backgroundColor="#d32f2f" barStyle="light-content" />
-     <SafeAreaView style={styles.container}>
-     <View style={styles.navBar}>
-        <TouchableOpacity onPress={()=>{router.back()}}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.navTitle}>Danh sách xin vắng</Text>
-        <TouchableOpacity>
-          <Text style={styles.navbtn}></Text>
-        </TouchableOpacity>
-      </View>
+      <StatusBar backgroundColor="#d32f2f" barStyle="light-content" />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.navBar}>
+          <TouchableOpacity
+            onPress={() => {
+              router.back();
+            }}
+          >
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.navTitle}>Danh sách xin vắng</Text>
+          <TouchableOpacity>
+            <Text style={styles.navbtn}></Text>
+          </TouchableOpacity>
+        </View>
 
-      <FlatList
-        data={absenceList}
-        keyExtractor={(item) => item.id}
-        renderItem={AbsenceItem}
-      />
+        <View style={styles.selectStatus}>
+          <Picker
+            selectedValue={status}
+            onValueChange={(itemValue, itemIndex) => setStatus(itemValue)}
+          >
+            <Picker.Item label="Chờ phê duyệt" value="PENDING" />
+            <Picker.Item label="Đã đồng ý" value="ACCEPTED" />
+            <Picker.Item label="Từ chối" value="REJECTED" />
+          </Picker>
+        </View>
 
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        animationType="slide"
-        onRequestClose={closeModal}
-      >
-        <View style={styles.modalBg}>
-          <View style= {styles.modalContainer}>
-            <View >
-              <Text style= {styles.modalHeader}>Chi tiết</Text>
-            </View>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{selected.title}</Text>
-              <Text style={styles.modalsup}>{`${selected.name} - ${selected.mssv}`}</Text>
-              <Text style={styles.modalsup}>{`Ngày vắng: ${selected.date}`}</Text>
+        <FlatList
+          data={absenceList}
+          keyExtractor={(item) => item.id +''}
+          renderItem={AbsenceItem}
+          ListEmptyComponent={
+            <Text style={{ textAlign: "center", marginTop: 10, fontSize: 16 }}>
+              Không có thư xin nghỉ nào
+            </Text>
+          }
+        />
+
+        <Modal
+          transparent={true}
+          visible={modalVisible}
+          animationType="slide"
+          onRequestClose={closeModal}
+        >
+          <View style={styles.modalBg}>
+            <View style={styles.modalContainer}>
               <View>
-                <Text style={styles.modalh1}>Lý do</Text>
-                <Text>{selected.cause}</Text>
+                <Text style={styles.modalHeader}>Chi tiết</Text>
               </View>
-              <View>
-                <Text style={styles.modalh1}>Minh chứng</Text>
-                <Image style={styles.image} source={{uri : selected.image }}/>
-              </View>
-              <View style={styles.modalBtn}>
-                <TouchableOpacity onPress={() => closeModal()}>
-                  <Text style={styles.btn}>Đóng</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleRefuse(selected)}>
-                  <Text style={styles.btn}>Từ chối</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleAgree(selected)}>
-                  <Text style={styles.btn}>Đồng ý</Text>
-                </TouchableOpacity>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>
+                  {selected.title || "Đơn xin nghỉ học"}
+                </Text>
+                <Text style={styles.modalsup}>
+                  {selected?.student_account
+                    ? `${selected.student_account.first_name} ${selected.student_account.last_name} - ${selected.student_account.student_id}`
+                    : ""}
+                </Text>
+                <Text
+                  style={styles.modalsup}
+                >{`Ngày vắng: ${selected.absence_date}`}</Text>
+                <View>
+                  <Text style={styles.modalh1}>Lý do</Text>
+                  <Text>{selected.reason}</Text>
+                </View>
+                <View>
+                  <Text style={styles.modalh1}>Minh chứng</Text>
+                  <Image
+                    style={styles.image}
+                    source={{ uri: selected.file_url }}
+                  />
+                </View>
+                <View style={styles.modalBtn}>
+                  <TouchableOpacity onPress={() => closeModal()}>
+                    <Text style={styles.btn}>Đóng</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleRefuse(selected)}>
+                    <Text style={styles.btn}>Từ chối</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleAgree(selected)}>
+                    <Text style={styles.btn}>Đồng ý</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-      </Modal>
-     </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
     </>
-  )
+  );
 }
 
 export default AbsenceList
@@ -231,5 +299,9 @@ const styles = StyleSheet.create({
     width: 'auto',
     height: 120,
     resizeMode:'contain' ,
+  },
+  selectStatus : {
+    borderBlockColor: '#d32f2f',
+    borderBottomWidth: 1,
   }
 })

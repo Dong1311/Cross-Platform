@@ -2,6 +2,7 @@
   "extends": "./node_modules/expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "esModuleInterop": true,
     "paths": {
       "@/*": ["./*"],
       // "@firebase/auth": ["./node_modules/@firebase/auth/dist/index.rn.d.ts"]

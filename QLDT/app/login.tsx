@@ -15,7 +15,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState('');  // State để lưu lỗi
   const router = useRouter();  // Khởi tạo useRouter
   const deviceId = 1;
-  const { token, saveToken } = useAuth();
+  const { token, saveToken, setRole, setAccountId } = useAuth();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -27,12 +27,14 @@ const Login = () => {
 
       const res = await axios.post('http://160.30.168.228:8080/it4788/login', {email,password,deviceId})
       if(res.status === 200) {
+        saveToken(res.data.data.token)
+        setRole(res.data.data.role)
+        setAccountId(res.data.data.id)
         if(res.data.role === 'STUDENT') {
           router.push('/home_sv')
         } else {
           router.push('/home_gv')
         }
-        saveToken(res.data.token)
       } 
     } catch (error) {
       console.log(error)

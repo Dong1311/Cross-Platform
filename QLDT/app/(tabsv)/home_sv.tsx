@@ -33,7 +33,7 @@ const Home = () => {
   const fetchClassList = async () => {
     try {
       const response = await axios.post('http://160.30.168.228:8080/it5023e/get_class_list', {
-        token: "ad69Nl",
+        token: "0AuFtm",
         role: "STUDENT",
         account_id: "157"
       });

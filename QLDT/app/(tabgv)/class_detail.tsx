@@ -23,15 +23,16 @@ const ClassDetail = () => {
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.navTitle}>{infoClass.class_name}</Text>
-        <TouchableOpacity>
-          <Text style={styles.navbtn}></Text>
+        <TouchableOpacity onPress={() => router.push('/(tabgv)/edit_class')}>
+          <Ionicons  name='create-outline' size={26} color="#fff" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.body}>
-        <Feature iconName='document-text' featureName='Tài liệu' feature='/documents-class'/>
+        <Feature iconName='document-attach' featureName='Tài liệu' feature='/documents-class'/>
         <Feature iconName='hand-right' featureName='Điểm danh' feature='/attendance'/>
         <Feature iconName='mail-unread' featureName='Danh sách xin vắng' feature='/(tabgv)/absence_list'/>
+        <Feature iconName='document-text' featureName='Danh sách điểm danh' feature='/view_attendance'/>
       </View>
 
       </SafeAreaView>
@@ -64,10 +65,10 @@ const styles = StyleSheet.create({
   },
   body: {
     marginTop: 16,
-    paddingHorizontal: 32,
+    paddingHorizontal: 10,
     flexDirection: 'row',
-    gap: 20,
-    justifyContent: 'space-between',
+    gap: 10,
+    justifyContent: 'flex-start',
     flexWrap: 'wrap'
   }
 })

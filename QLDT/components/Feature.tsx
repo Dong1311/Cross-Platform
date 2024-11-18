@@ -7,8 +7,7 @@ const Feature = ({iconName, featureName, feature}) => {
   
   const handlePress = (feature) => {
     router.push({  
-      pathname: feature,  
-      params: { itemId: 42, otherParam: 'Hello World' }  
+      pathname: feature,
     });  
   }
 
@@ -24,7 +23,7 @@ export default Feature
 
 const styles = StyleSheet.create({
   container: {
-    width:'46%',
+    minWidth: '46%',
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',

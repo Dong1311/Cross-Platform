@@ -57,7 +57,7 @@ const Home = () => {
        style={{width: '100%'}}>
         <View style={styles.classBody}>
           <View style={[styles.classIcon, { backgroundColor: getRandomColor() }]}>
-            <Text style={styles.classCode}>{item.class_id.slice(4,6)}</Text> 
+            <Text style={styles.classCode}>{item.class_type}</Text> 
           </View>
           <View style={styles.classInfo}>
             <Text style={styles.classTitle}>{item.class_name}</Text>
@@ -131,19 +131,6 @@ const Home = () => {
         <TouchableOpacity style={styles.tabBarButton}>
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
-        </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.tabBarButton}>
-          <Icon name="calendar-today" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Lịch</Text>
-<<<<<<< HEAD
-        </TouchableOpacity> */}
-        <TouchableOpacity style={styles.tabBarButton} onPress={()=> router.push('/attendance')}>
-          <Icon name="checklist" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Điểm danh</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton} onPress={()=> router.push('/(tabgv)/absence_list')}>
-          <Icon name="checklist" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Ds xin vắng</Text>
         </TouchableOpacity>
       </View>
     </View>

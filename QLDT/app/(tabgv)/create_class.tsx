@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 20,
     backgroundColor: '#b71c1c',
-    paddingTop: 40,  // Tạo khoảng trống cho mũi tên
+    paddingTop: 40,  
     paddingBottom: 20,
   },
   backButton: {

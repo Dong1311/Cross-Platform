@@ -24,16 +24,24 @@ import { useAuth } from "@/Context/AuthProvider";
 export default function App() {
   const [documents, setDocuments] = useState<Documents[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<Documents>();
+  const [selectedDocument, setSelectedDocument] = useState<Documents | null>(null);
   const [newDocumentName, setNewDocumentName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { classId, token } = useAuth();
+  const { classId, token } = useAuth() as AuthContextType;
 
   interface Documents {
     id: number;
     class_id: string;
     material_name: string;
+    description: string;
+    material_link: string;
+    material_type: string ;
+  }
+
+  interface AuthContextType {
+    token: string;
+    classId : string;
   }
 
   useEffect(() => {
@@ -44,15 +52,15 @@ export default function App() {
     try {
       setLoading(true);
 
-      const response = await axios.get(
-        "http://160.30.168.228:8080/it5023e/get_material_list",
-        { params: { token, class_id: classId } }
+      const response = await axios.post(
+        "http://157.66.24.126:8080/it5023e/get_material_list",
+        { token, class_id: classId } 
       );
 
       setDocuments(response.data.data);
-    } catch (err) {
+    } catch (err : any) {
       setError("Failed to load documents");
-      console.log(err);
+      console.log(err.response.data.meta.message);
     } finally {
       setLoading(false);
     }
@@ -62,7 +70,7 @@ export default function App() {
     id: string;
     material_name: string;
   }
-  const openModal = (document: Document) => {
+  const openModal = (document: Documents) => {
     setSelectedDocument(document);
     setNewDocumentName(document.material_name);
     setModalVisible(true);
@@ -70,7 +78,7 @@ export default function App() {
 
   const closeModal = () => {
     setModalVisible(false);
-    setSelectedDocument(undefined);
+    setSelectedDocument(null);
   };
 
   const confirmDelete = () => {
@@ -98,7 +106,7 @@ export default function App() {
   const handleDeleteDocument = async () => {
     if (selectedDocument) {
       try {
-        await axios.post("http://160.30.168.228:8080/it5023e/delete_material", {
+        await axios.post("http://157.66.24.126:8080/it5023e/delete_material", {
           token,
           material_id: selectedDocument.id,
         });
@@ -122,7 +130,7 @@ export default function App() {
         };
 
         console.log(updatedDocument)
-        await axios.post(`http://160.30.168.228:8080/it5023e/edit_material`, updatedDocument);
+        await axios.post(`http://157.66.24.126:8080/it5023e/edit_material`, updatedDocument);
 
         fetchDocuments();
         closeModal();
@@ -140,19 +148,20 @@ export default function App() {
       if (!result.canceled) {
         // Upload the document file to the server
         let formdata = new FormData();
+
         formdata.append("token", token);
         formdata.append("classId", classId);
         formdata.append("title", result.assets[0].name);
         formdata.append("description", result.assets[0].name);
-        formdata.append("materialType", result.assets[0].mimeType);
+        formdata.append("materialType", result.assets[0].mimeType ?? '');
         formdata.append("file", {
           uri: result.assets[0].uri,
-          type: result.assets[0].mimeType,
+          type: result.assets[0].mimeType ?? '',
           name: result.assets[0].name,
         });
 
         const response = await axios.post(
-          "http://160.30.168.228:8080/it5023e/upload_material",
+          "http://157.66.24.126:8080/it5023e/upload_material",
           formdata,
           {
             headers: {
@@ -160,7 +169,7 @@ export default function App() {
             },
           }
         );
-        if (response.data.code === 1000) {
+        if (response.data.code = "1000") {
           // setDocuments([...documents, response.data]);
           fetchDocuments();
           Alert.alert("Success", "Upload file thành công");
@@ -172,13 +181,13 @@ export default function App() {
     }
   };
 
-  const handleOpenFile = async (id) => {
+  const handleOpenFile = async (id : string) => {
     try {
-      const res = await axios.get(
-        "http://160.30.168.228:8080/it5023e/get_material_info",
-        { params: { token, material_id: id } }
+      const res = await axios.post(
+        "http://157.66.24.126:8080/it5023e/get_material_info",
+         { token, material_id: id } 
       );
-      if (res.data.code === 1000) {
+      if (res.data.code === "1000") {
         Linking.openURL(res.data.data.material_link);
       }
     } catch (error) {

@@ -17,7 +17,7 @@ const Attendance = () => {
 
   const getStudents = async () => {
     try {
-      const res = await axios.post('http://160.30.168.228:8080/it5023e/get_class_info', {token,role, account_id : accountId, class_id : classId})
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/get_class_info', {token,role, account_id : accountId, class_id : classId})
       if(res.status === 200) {
         setStudents(res.data.data.student_accounts)
       }
@@ -42,9 +42,10 @@ const Attendance = () => {
 
   const handleSendList = async () => {
     try {
-      const res = await axios.post('http://160.30.168.228:8080/it5023e/take_attendance',
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/take_attendance',
          {token, class_id: classId, date : new Date(Date.now()).toISOString(), attendance_list : attendance})
-      if(res.data.meta.code === 1000) {
+      console.log(res.data)
+      if(res.data.meta.code === "1000") {
         router.back()
       }else {
         alert('Error: ' + res.data.meta.message)

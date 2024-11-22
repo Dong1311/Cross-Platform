@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [role, setRole] = useState(null);
   const [accountId, setAccountId] = useState(null);
+  const [classList, setClassList] = useState(null);
   const [classId, setClassId] = useState(null);
 
   // Hàm lưu token và lưu vào SecureStore
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }) => {
 
 
   const value = {
-    token,role,accountId,classId, setClassId, setRole, setAccountId, saveToken, loadToken, deleteToken,
+    token,role,accountId,classId, setClassId,classList,setClassList, setRole, setAccountId, saveToken, loadToken, deleteToken,
   }
 
   return (

@@ -40,7 +40,6 @@ export default function RootLayout() {
           <Stack.Screen name="sign-up" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
-          <Stack.Screen name="documemts-class" options={{ headerShown: false }}/>
           <Stack.Screen name="GetVerifyCode" options={{ headerShown: false }} />
           <Stack.Screen name="CheckVerifyCode" options={{ headerShown: false }} />
 
@@ -52,11 +51,13 @@ export default function RootLayout() {
           <Stack.Screen name="(tabgv)/absence_list" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/class_detail" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/view_attendance" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabgv)/assignment" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabgv)/create_assignment" options={{ headerShown: false }} />
 
           {/* <Stack.Screen name="(tabsv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabsv)/home_sv" options={{ headerShown: false }} />
           {/* <Stack.Screen name="(tabsv)/submission" options={{ headerShown: false }} /> */}
-          <Stack.Screen name="(tabsv)/submission[id]" options={{ headerShown: false }} />
+          {/* <Stack.Screen name="(tabsv)/submission[id]" options={{ headerShown: false }} /> */}
 
           <Stack.Screen name="(tabsv)/assignment_sv" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/class_register" options={{ headerShown: false }} />

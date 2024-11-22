@@ -1,78 +1,88 @@
+import React, { useEffect, useState } from 'react';
 import {
-  Button,
   FlatList,
   Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
-import React, { useEffect, useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker, {
-  DateTimePickerAndroid,
-} from "@react-native-community/datetimepicker";
-import axios from "axios";
-import { useAuth } from "@/Context/AuthProvider";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import axios from 'axios';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
-const view_attendance = () => {
-  const [date, setDate] = useState(new Date());
-  const [students, setStudents] = useState([]);
-  const [attendance, setAttendance] = useState([]);
-  const [listStudent, setListStudent] = useState([]);
-  const [msgError, setMsgError] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState();
+import { useAuth } from '@/Context/AuthProvider';
+
+interface Student {
+  account_id: string;
+  student_id: string;
+  first_name: string;
+  last_name: string;
+  status?: string;
+  attendance_id?: string;
+}
+
+const ViewAttendance: React.FC = () => {
+  const [date, setDate] = useState<Date>(new Date());
+  const [students, setStudents] = useState<Student[]>([]);
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [listStudent, setListStudent] = useState<Student[]>([]);
+  const [msgError, setMsgError] = useState<string>('');
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | undefined>(undefined);
+
   const { classId, token, accountId, role } = useAuth();
 
-  const getStudents = async () => {
+  const getStudents = async (): Promise<void> => {
     try {
       const res = await axios.post(
-        "http://160.30.168.228:8080/it5023e/get_class_info",
+        'http://157.66.24.126:8080/it5023e/get_class_info',
         { token, role, account_id: accountId, class_id: classId }
       );
       if (res.status === 200) {
         setStudents(res.data.data.student_accounts);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
-  const getAttendanceData = async () => {
+  const getAttendanceData = async (): Promise<void> => {
     try {
       const res = await axios.post(
-        "http://160.30.168.228:8080/it5023e/get_attendance_list",
+        'http://157.66.24.126:8080/it5023e/get_attendance_list',
         { token, class_id: classId, date }
       );
       if (res.status === 200) {
         setAttendance(res.data.data.attendance_student_details);
-        setMsgError("");
+        setMsgError('');
       }
-    } catch (error) {
+    } catch (error: any) {
       setAttendance([]);
-      setMsgError(error.response.data.data);
-      console.log("Error", error.response.data.meta.message);
+      setMsgError(error.response?.data?.data || 'Error fetching attendance');
+      console.error('Error', error.response?.data?.meta?.message);
     }
   };
 
-  const handleChangeStatus = async (status) => {
+  const handleChangeStatus = async (status: string): Promise<void> => {
     try {
+      if (!selectedStudent?.attendance_id) return;
+
       const res = await axios.post(
-        "http://160.30.168.228:8080/it5023e/set_attendance_status",
-        { token, attendance_id: selectedStudent.attendance_id , status : status }
+        'http://157.66.24.126:8080/it5023e/set_attendance_status',
+        { token, attendance_id: selectedStudent.attendance_id, status }
       );
-      if(res.data.meta.code === 1000) {
-        getAttendanceData()
-        alert('Chỉnh sửa thành công')
-        setModalVisible(false)
+      if (res.data.meta.code === "1000") {
+        getAttendanceData();
+        alert('Chỉnh sửa thành công');
+        setModalVisible(false);
       }
-    } catch (error) {
-      console.log(error.response.data);
-      alert(error.response.data.meta.message)
+    } catch (error: any) {
+      console.error(error.response?.data);
+      alert(error.response?.data?.meta?.message || 'Error updating status');
     }
   };
 
@@ -85,33 +95,32 @@ const view_attendance = () => {
   }, [date]);
 
   useEffect(() => {
-    let templist;
+    let templist: Student[] = [];
     if (attendance.length > 0) {
       templist = students.map((student) => ({
         ...student,
         ...attendance.find((att) => att.student_id === student.student_id),
       }));
-    } else {
-      templist = [];
     }
     setListStudent(templist);
-  }, [attendance]);
+  }, [attendance, students]);
 
-  const openModal = (item) => {
+  const openModal = (item: Student): void => {
     setModalVisible(true);
-    setSelectedStudent(item)
+    setSelectedStudent(item);
   };
 
-  const closeModal = () => {
+  const closeModal = (): void => {
     setModalVisible(false);
   };
 
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate;
-    setDate(currentDate);
+  const onChange = (_event: any, selectedDate: Date | undefined): void => {
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
   };
 
-  const showMode = (currentMode) => {
+  const showMode = (currentMode: 'date' | 'time'): void => {
     DateTimePickerAndroid.open({
       value: date,
       onChange,
@@ -120,11 +129,11 @@ const view_attendance = () => {
     });
   };
 
-  const showDatepicker = () => {
-    showMode("date");
+  const showDatepicker = (): void => {
+    showMode('date');
   };
 
-  const renderStudent = ({ item }) => {
+  const renderStudent = ({ item }: { item: Student }) => {
     return (
       <View style={styles.itemStudent}>
         <View style={styles.infoStudent}>
@@ -137,20 +146,19 @@ const view_attendance = () => {
             <Text
               style={{
                 color:
-                  item.status === "PRESENT"
-                    ? "green"
-                    : item.status === "UNEXCUSED_ABSENCE"
-                    ? "red"
-                    : item.status === "EXCUSED_ABSENCE"
-                    ? "#e5b55f"
-                    : "black",
+                  item.status === 'PRESENT'
+                    ? 'green'
+                    : item.status === 'UNEXCUSED_ABSENCE'
+                    ? 'red'
+                    : item.status === 'EXCUSED_ABSENCE'
+                    ? '#e5b55f'
+                    : 'black',
               }}
             >
               {item.status}
             </Text>
           </View>
         </View>
-        {/* Nút hiển thị menu */}
         <TouchableOpacity
           style={styles.changeStatusButton}
           onPress={() => openModal(item)}
@@ -164,26 +172,22 @@ const view_attendance = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.navBar}>
-        <TouchableOpacity
-          onPress={() => {
-            router.back();
-          }}
-        >
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.navTitle}>Danh sách điểm danh</Text>
         <TouchableOpacity>
-          <Text style={styles.navbtn}></Text>
+          <Text style={styles.navbtn} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.containerDate}>
         <Text style={styles.infoDate}>
-          Điểm danh ngày:{" "}
-          {date.toLocaleDateString("vi-VN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
+          Điểm danh ngày:{' '}
+          {date.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
           })}
         </Text>
 
@@ -194,16 +198,7 @@ const view_attendance = () => {
 
       <View>
         {msgError ? (
-          <Text
-            style={{
-              textAlign: "center",
-              fontSize: 16,
-              marginTop: 8,
-              color: "#d32f2f",
-            }}
-          >
-            {msgError}
-          </Text>
+          <Text style={styles.errorText}>{msgError}</Text>
         ) : (
           <FlatList
             data={listStudent}
@@ -214,7 +209,7 @@ const view_attendance = () => {
       </View>
 
       <Modal
-        transparent={true}
+        transparent
         visible={modalVisible}
         animationType="slide"
         onRequestClose={closeModal}
@@ -226,14 +221,18 @@ const view_attendance = () => {
               <TouchableOpacity onPress={() => handleChangeStatus('PRESENT')}>
                 <Text style={styles.modalbtn}>PRESENT</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleChangeStatus('EXCUSED_ABSENCE')}>
+              <TouchableOpacity
+                onPress={() => handleChangeStatus('EXCUSED_ABSENCE')}
+              >
                 <Text style={styles.modalbtn}>EXCUSED_ABSENCE</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleChangeStatus('UNEXCUSED_ABSENCE')}>
+              <TouchableOpacity
+                onPress={() => handleChangeStatus('UNEXCUSED_ABSENCE')}
+              >
                 <Text style={styles.modalbtn}>UNEXCUSED_ABSENCE</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => closeModal()}>
+            <TouchableOpacity onPress={closeModal}>
               <Text style={styles.btnclosed}>Đóng</Text>
             </TouchableOpacity>
           </View>
@@ -243,57 +242,55 @@ const view_attendance = () => {
   );
 };
 
-export default view_attendance;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#eee",
+    backgroundColor: '#eee',
   },
   navBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 20,
-    backgroundColor: "#d32f2f",
+    backgroundColor: '#d32f2f',
   },
   navTitle: {
     fontSize: 18,
-    color: "white",
+    color: 'white',
   },
   navbtn: {
     fontSize: 18,
-    color: "white",
+    color: 'white',
     padding: 4,
   },
   containerDate: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 10,
     marginTop: 6,
     marginBottom: 6,
   },
   btndate: {
     padding: 8,
-    backgroundColor: "#ccc",
+    backgroundColor: '#ccc',
   },
   infoDate: {
     fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: 'bold',
+    color: '#333',
   },
   itemStudent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 12,
-    width: "100%",
+    width: '100%',
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomColor: '#ccc',
   },
   infoStudent: {
-    flexDirection: "row",
+    flexDirection: 'row',
   },
   groupInfo: {
     marginLeft: 12,
@@ -301,53 +298,40 @@ const styles = StyleSheet.create({
   },
   nameStudent: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   mssvStudent: {
-    color: "#888",
-  },
-  menu: {
-    marginTop: 10,
-    backgroundColor: "#fff",
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 10,
-  },
-  menuItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    color: '#888',
   },
   changeStatusButton: {
     marginTop: 10,
-    backgroundColor: "#d32f2f",
+    backgroundColor: '#d32f2f',
     padding: 10,
     borderRadius: 5,
-    alignItems: "center",
+    alignItems: 'center',
   },
   changeStatusButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: '#fff',
+    fontWeight: 'bold',
   },
   modalBg: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    backgroundColor: "#fff",
-    width: "90%",
+    backgroundColor: '#fff',
+    width: '90%',
     borderRadius: 4,
   },
   modalHeader: {
     fontSize: 20,
-    fontWeight: "700",
-    backgroundColor: "#d32f2f",
-    color: "#FFF",
+    fontWeight: '700',
+    backgroundColor: '#d32f2f',
+    color: '#FFF',
     padding: 16,
-    textAlign: "center",
+    textAlign: 'center',
     borderTopRightRadius: 4,
     borderTopLeftRadius: 4,
   },
@@ -357,20 +341,28 @@ const styles = StyleSheet.create({
   },
   modalbtn: {
     fontSize: 14,
-    textAlign: "center",
-    backgroundColor: "#ccc",
+    textAlign: 'center',
+    backgroundColor: '#ccc',
     paddingVertical: 8,
     borderRadius: 6,
   },
   btnclosed: {
-    backgroundColor: "#d32f2f",
-    color: "#fff",
+    backgroundColor: '#d32f2f',
+    color: '#fff',
     width: 80,
-    textAlign: "center",
-    alignSelf: "flex-end",
+    textAlign: 'center',
+    alignSelf: 'flex-end',
     padding: 10,
     marginVertical: 16,
     marginRight: 16,
     borderRadius: 6,
   },
+  errorText: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 8,
+    color: '#d32f2f',
+  },
 });
+
+export default ViewAttendance;

@@ -79,7 +79,7 @@ const SignUpScreen = () => {
   
         console.log("UUID đã gửi:", userData.uuid);  // In UUID ra console để theo dõi
   
-        const response = await fetch('http://160.30.168.228:8080/it4788/signup', {
+        const response = await fetch('http://157.66.24.126:8080/it4788/signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

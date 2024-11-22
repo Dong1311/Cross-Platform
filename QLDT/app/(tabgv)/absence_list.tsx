@@ -1,4 +1,4 @@
-import { Alert, FlatList, Image, Modal, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, FlatList, Image, Linking, Modal, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -6,13 +6,14 @@ import { router } from 'expo-router'
 import axios from 'axios'
 import { useAuth } from "@/Context/AuthProvider";
 import { Picker } from '@react-native-picker/picker'
+import { Link } from '@react-navigation/native'
 
 const AbsenceList = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [selected, setSelected] = useState<absenceData>({});
+  const [selected, setSelected] = useState<Partial<absenceData>>({});
   const [absenceList, setAbsenceList] = useState([]);
-  const {token, classId} = useAuth();
+  const {token, classId} = useAuth() as AuthContextType;
   const [status, setStatus] = useState('PENDING')
 
   interface absenceData {
@@ -33,11 +34,20 @@ const AbsenceList = () => {
     student_id: number;
   }
 
+  interface AuthContextType {
+    token: string;
+    classId: string;
+  }
+
   const fetchAbsenceList = async () => {
     try {
-      const res = await axios.post('http://160.30.168.228:8080/it5023e/get_absence_requests', {token, class_id : classId, status });
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/get_absence_requests', {token, class_id : classId, status, pageable_request : {
+        "page" : "0",
+        "page_size" : "10"
+    }});
+
       if(res.status === 200) {
-        setAbsenceList(res.data.data)
+        setAbsenceList(res.data.data.page_content)
       }
     } catch (error) {
       console.log(error)
@@ -55,9 +65,13 @@ const AbsenceList = () => {
     setModalVisible(false);
   }
 
+  const openURL = (url) => {
+    Linking.openURL(url).catch((err) => console.error('An error occurred', err));
+  };
+
   const handleAgree = async (selected : absenceData) => {
     try {
-      const res = await axios.post('http://160.30.168.228:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'ACCEPTED'});
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'ACCEPTED'});
       if(res.status === 200) {
         Alert.alert('Hoàn Thành', 'đồng ý đơn xin nghỉ thành công')
         fetchAbsenceList();
@@ -72,7 +86,7 @@ const AbsenceList = () => {
   
   const handleRefuse = async (selected : absenceData) => {
     try {
-      const res = await axios.post('http://160.30.168.228:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'REJECTED'});
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'REJECTED'});
       if(res.status === 200) {
         Alert.alert('Hoàn Thành', 'Từ chối đơn xin nghỉ thành công')
         fetchAbsenceList();
@@ -175,10 +189,9 @@ const AbsenceList = () => {
                 </View>
                 <View>
                   <Text style={styles.modalh1}>Minh chứng</Text>
-                  <Image
-                    style={styles.image}
-                    source={{ uri: selected.file_url }}
-                  />
+                  <TouchableOpacity onPress={() => openURL(selected.file_url) }>
+                    <Text style={styles.btn2}>Xem minh chứng</Text>
+                  </TouchableOpacity>
                 </View>
                 <View style={styles.modalBtn}>
                   <TouchableOpacity onPress={() => closeModal()}>
@@ -246,6 +259,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#d32f2f',
     padding: 8,
     color: '#fff',
+    borderRadius: 4,
+  },
+  btn2 : {
+    backgroundColor: '#ccc',
+    padding: 8,
+    width: '40%',
     borderRadius: 4,
   },
 

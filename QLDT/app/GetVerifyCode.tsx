@@ -21,7 +21,7 @@ const GetVerifyCode = () => {
 
   const handleGetVerifyCode = async () => {
     try {
-      const response = await fetch('http://160.30.168.228:8080/it4788/get_verify_code', {
+      const response = await fetch('http://157.66.24.126:8080/it4788/get_verify_code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })

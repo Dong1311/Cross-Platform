@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import Icons from '@expo/vector-icons/MaterialCommunityIcons';
-import axios from 'axios';
-import { Link, useRouter } from 'expo-router';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import Icon from "react-native-vector-icons/MaterialIcons";
+import Icons from "@expo/vector-icons/MaterialCommunityIcons";
+import axios from "axios";
+import { Link, useRouter } from "expo-router";
+import { useAuth } from "@/Context/AuthProvider";
 
 interface ClassItem {
   class_id: string;
@@ -18,28 +26,42 @@ interface ClassItem {
 }
 
 const Home = () => {
-  const [search, setSearch] = useState('');
-  const [classes, setClasses] = useState<ClassItem[]>([]); 
+  const [search, setSearch] = useState("");
+  const [classes, setClasses] = useState<ClassItem[]>([]);
   const router = useRouter();
+  const { token, role, accountId } = useAuth() as AuthContextType;
+
+  interface AuthContextType {
+    token: string;
+    role: string;
+    accountId: string;
+  }
 
   useEffect(() => {
     fetchClassList();
   }, []);
 
   const handleClassPress = (classId: string) => {
-    router.push({ pathname: '/class_detail', params: { classId } });
+    router.push({ pathname: "/class_detail", params: { classId } });
   };
 
   const fetchClassList = async () => {
     try {
-      const response = await axios.post('http://160.30.168.228:8080/it5023e/get_class_list', {
-        token: "0AuFtm",
-        role: "STUDENT",
-        account_id: "157"
-      });
-
-      if (response.data.meta.code === 1000) {
-        setClasses(response.data.data);
+      const response = await axios.post(
+        "http://157.66.24.126:8080/it5023e/get_class_list",
+        {
+          token,
+          role,
+          account_id: accountId,
+          pageable_request: {
+            page: "0",
+            page_size: "5",
+          },
+        }
+      );
+      console.log(response.data);
+      if (response.data.meta.code === "1000") {
+        setClasses(response.data.data.page_content);
       } else {
         console.error("Failed to fetch classes:", response.data.meta.message);
       }
@@ -63,7 +85,14 @@ const Home = () => {
   );
 
   const getRandomColor = () => {
-    const colors = ['#FF5252', '#FF9800', '#3F51B5', '#9C27B0', '#00BCD4', '#009688'];
+    const colors = [
+      "#FF5252",
+      "#FF9800",
+      "#3F51B5",
+      "#9C27B0",
+      "#00BCD4",
+      "#009688",
+    ];
     return colors[Math.floor(Math.random() * colors.length)];
   };
 
@@ -99,19 +128,28 @@ const Home = () => {
       />
 
       <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/(tabsv)/notifications_screen')}>
+        <TouchableOpacity
+          style={styles.tabBarButton}
+          onPress={() => router.push("/(tabsv)/notifications_screen")}
+        >
           <Icon name="notifications" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Hoạt động</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/(tabsv)/leave_request')}>
+        <TouchableOpacity
+          style={styles.tabBarButton}
+          onPress={() => router.push("/(tabsv)/leave_request")}
+        >
           <Icon name="chat" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Trò chuyện</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarButton}>
           <Icon name="group" size={24} color="purple" />
-          <Text style={[styles.tabBarLabel, { color: 'purple' }]}>Nhóm</Text>
+          <Text style={[styles.tabBarLabel, { color: "purple" }]}>Nhóm</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/(tabsv)/assignment_sv')}>
+        <TouchableOpacity
+          style={styles.tabBarButton}
+          onPress={() => router.push("/(tabsv)/assignment_sv")}
+        >
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
         </TouchableOpacity>
@@ -119,7 +157,10 @@ const Home = () => {
           <Icon name="calendar-today" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Lịch</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/documents-class')}>
+        <TouchableOpacity
+          style={styles.tabBarButton}
+          onPress={() => router.push("/documents-class")}
+        >
           <Icons name="file-document-multiple" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Tài liệu</Text>
         </TouchableOpacity>
@@ -131,38 +172,38 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 20,
     marginTop: 20,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   avatarContainer: {
-    backgroundColor: 'orange',
+    backgroundColor: "orange",
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e0e0e0',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#e0e0e0",
     marginHorizontal: 16,
     marginVertical: 10,
     borderRadius: 8,
@@ -178,51 +219,51 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginHorizontal: 16,
     marginTop: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   classContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
+    flexDirection: "row",
+    backgroundColor: "white",
     borderRadius: 8,
     marginVertical: 8,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   classIcon: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 16,
   },
   classCode: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   classInfo: {
     flex: 1,
   },
   classTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   classTeacher: {
-    color: 'gray',
+    color: "gray",
     fontSize: 14,
   },
   tabBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
     paddingVertical: 10,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: "#e0e0e0",
   },
   tabBarButton: {
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
   },
   tabBarLabel: {

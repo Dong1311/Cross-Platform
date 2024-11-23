@@ -1,9 +1,11 @@
 import {
+  Alert,
   FlatList,
   Linking,
   Modal,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -14,20 +16,45 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/Context/AuthProvider";
 import axios from "axios";
 
+interface StudentAccount {
+  first_name: string;
+  last_name: string;
+  student_id: string;
+}
+
+interface Assignment {
+  id: number;
+  description: string;
+  file_url?: string;
+}
+
+interface SurveyResponse {
+  id: number;
+  student_account: StudentAccount;
+  submission_time: string;
+  grade?: number;
+  text_response?: string;
+  file_url?: string;
+}
+
 const AssignmentDetail = () => {
   const params = useLocalSearchParams();
   const { token, assignmentsData } = useAuth();
-  const [assignment, setAssignment] = useState({});
-  const [surverRes, setSurverRes] = useState();
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [surveyRes, setSurveyRes] = useState<SurveyResponse[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selected, setSelected] = useState({});
+  const [selected, setSelected] = useState<SurveyResponse | null>(null);
+  const [grade, setGrade] = useState('');
 
+  // Set initial assignment data
   useEffect(() => {
-    let result = assignmentsData.find(
-      (assignment) => assignment.id === Number(params.id)
-    );
-    setAssignment(result);
-  }, []);
+    if (assignmentsData && params.id) {
+      const result = assignmentsData.find(
+        (item) => item.id === Number(params.id)
+      );
+      setAssignment(result || null);
+    }
+  }, [assignmentsData, params.id]);
 
   const getSurveyResponse = async () => {
     try {
@@ -36,40 +63,114 @@ const AssignmentDetail = () => {
         { token, survey_id: params.id }
       );
       if (res.data.meta.code === "1000") {
-        setSurverRes(res.data.data);
+        setSurveyRes(res.data.data || []);
       }
     } catch (error) {
-      console.log(error.response.data);
+      console.error("Error fetching survey responses:", error);
+      Alert.alert(
+        "Lỗi",
+        error?.response?.data?.meta?.message || "Không thể tải dữ liệu"
+      );
+    }
+  };
+
+  const validateGrade = (gradeValue) => {
+    const trimmedGrade = gradeValue.trim();
+    if (!trimmedGrade) {
+      Alert.alert("Lỗi", "Vui lòng nhập số điểm");
+      return false;
+    }
+
+    const numericScore = parseFloat(trimmedGrade);
+    if (isNaN(numericScore)) {
+      Alert.alert("Lỗi", "Điểm phải là một số hợp lệ.");
+      return false;
+    }
+
+    if (numericScore < 0 || numericScore > 10) {
+      Alert.alert("Lỗi", "Điểm phải nằm trong khoảng từ 0 đến 10.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleGrading = async (submissionId) => {
+    if (!validateGrade(grade)) return;
+
+    try {
+      const res = await axios.post(
+        "http://157.66.24.126:8080/it5023e/get_survey_response",
+        {
+          token,
+          survey_id: String(params.id),
+          grade: {
+            score: grade,
+            submission_id: String(submissionId),
+          },
+        }
+      );
+      
+      if (res.data.meta.code === "1000") {
+        Alert.alert("Thành công", "Chấm điểm thành công");
+        closeModal();
+        getSurveyResponse(); // Refresh the data after grading
+      }
+    } catch (error) {
+      Alert.alert(
+        "Lỗi",
+        error?.response?.data?.meta?.message || "Không thể chấm điểm"
+      );
+      console.error("Error grading submission:", error);
     }
   };
 
   const openModal = (item) => {
-    setModalVisible(true);
     setSelected(item);
-  }
-
+    setGrade(""); // Reset grade when opening modal
+    setModalVisible(true);
+  };
 
   const closeModal = () => {
     setModalVisible(false);
-  }
-
-  useEffect(() => {
-    getSurveyResponse();
-  }, []);
-
-  const openURL = (url) => {
-    Linking.openURL(url).catch((err) =>
-      console.error("An error occurred", err)
-    );
+    setSelected(null);
+    setGrade("");
   };
 
-  const renderSurverRes = ({ item }) => {
+  useEffect(() => {
+    if (params.id) {
+      getSurveyResponse();
+    }
+  }, [params.id]);
+
+  const openURL = async (url) => {
+    if (!url) {
+      Alert.alert("Lỗi", "Không có URL hợp lệ");
+      return;
+    }
+
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert("Lỗi", "Không thể mở liên kết này");
+      }
+    } catch (error) {
+      console.error("Error opening URL:", error);
+      Alert.alert("Lỗi", "Không thể mở liên kết");
+    }
+  };
+
+  const renderSurveyRes = ({ item }) => {
+    if (!item) return null;
+
     return (
       <View style={styles.resContainer}>
         <View>
           <Text
             style={styles.resName}
-          >{`${item.student_account.first_name} ${item.student_account.last_name}`}</Text>
+          >{`${item.student_account?.first_name || ''} ${item.student_account?.last_name || ''}`}</Text>
           <Text>{`Nộp lúc: ${new Date(
             item.submission_time
           ).toLocaleString()}`}</Text>
@@ -85,19 +186,35 @@ const AssignmentDetail = () => {
     );
   };
 
+  if (!assignment) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.navBar}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.navTitle}>Bài tập</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <Text style={styles.emptyText}>Không tìm thấy bài tập</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView>
+    <SafeAreaView style={styles.container}>
       <View style={styles.navBar}>
-        <TouchableOpacity
-          onPress={() => {
-            router.back();
-          }}
-        >
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>{params.title}</Text>
+        <Text style={styles.navTitle}>{params.title || "Chi tiết bài tập"}</Text>
         <TouchableOpacity
-          onPress={() => router.push("/(tabgv)/create_assignment")}
+          onPress={() =>
+            router.push({
+              pathname: "/edit_assignment",
+              params: { id: params.id },
+            })
+          }
         >
           <Ionicons name="create-outline" size={26} color="#fff" />
         </TouchableOpacity>
@@ -105,81 +222,95 @@ const AssignmentDetail = () => {
 
       <View style={styles.descriptionContainer}>
         <Text style={styles.label}>Hướng dẫn:</Text>
-        <Text style={styles.desText}>{assignment.description}</Text>
-        <TouchableOpacity onPress={() => openURL(assignment.file_url)}>
-          <Text style={styles.desBtn}>Tài liệu hướng dẫn</Text>
-        </TouchableOpacity>
+        <Text style={styles.desText}>{assignment.description || "Không có hướng dẫn"}</Text>
+        {assignment.file_url && (
+          <TouchableOpacity onPress={() => openURL(assignment.file_url)}>
+            <Text style={styles.desBtn}>Tài liệu hướng dẫn</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.list}>
         <Text style={styles.label}>Danh sách bài làm</Text>
 
         <FlatList
-          data={surverRes}
-          keyExtractor={(item) => item.id + ""}
-          renderItem={renderSurverRes}
+          data={surveyRes}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderSurveyRes}
           ListEmptyComponent={
-            <Text
-              style={{ textAlign: "center", marginTop: 10, fontSize: 16 }}
-            >
-              Chưa có sinh viên nào nộp bài 
+            <Text style={styles.emptyText}>
+              Chưa có sinh viên nào nộp bài
             </Text>
           }
         />
       </View>
 
       <Modal
-          transparent={true}
-          visible={modalVisible}
-          animationType="slide"
-          onRequestClose={closeModal}
-        >
-          <View style={styles.modalBg}>
-            <View style={styles.modalContainer}>
-              <View>
-                <Text style={styles.modalHeader}>Chi tiết</Text>
-              </View>
+        transparent={true}
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalBg}>
+          <View style={styles.modalContainer}>
+            <View>
+              <Text style={styles.modalHeader}>Chi tiết</Text>
+            </View>
+            {selected && (
               <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>
-                  {selected.title || "Đơn xin nghỉ học"}
-                </Text>
                 <Text style={styles.modalsup}>
-                  {selected?.student_account
-                    ? `${selected.student_account.first_name} ${selected.student_account.last_name} - ${selected.student_account.student_id}`
-                    : ""}
+                  {`${selected.student_account?.first_name || ''} ${
+                    selected.student_account?.last_name || ''
+                  } - ${selected.student_account?.student_id || ''}`}
                 </Text>
-                <Text
-                  style={styles.modalsup}
-                >{`Ngày vắng: ${selected.absence_date}`}</Text>
+                <Text style={styles.modalsup}>{`Điểm: ${
+                  selected.grade ? `${selected.grade}` : "Chưa chấm điểm"
+                }`}</Text>
                 <View>
                   <Text style={styles.modalh1}>Bài làm</Text>
-                  <Text style={{marginLeft:8}}>{selected.text_response}</Text>
+                  <Text style={{ marginLeft: 8 }}>{selected.text_response || "Không có nội dung"}</Text>
                 </View>
-                <View style={{marginTop:8,}}>
-                  <TouchableOpacity onPress={() => openURL(selected.file_url) }>
-                    <Text style={styles.desBtn}>File bài làm</Text>
-                  </TouchableOpacity>
-                </View>
+                {selected.file_url && (
+                  <View style={{ marginTop: 8 }}>
+                    <TouchableOpacity onPress={() => openURL(selected.file_url)}>
+                      <Text style={styles.desBtn}>File bài làm</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {!selected.grade && (
+                  <View style={{ marginTop: 16 }}>
+                    <Text style={styles.label2}>Điểm</Text>
+                    <TextInput
+                      value={grade}
+                      onChangeText={setGrade}
+                      style={styles.textInput}
+                      placeholder="Nhập điểm"
+                      keyboardType="numeric"
+                      maxLength={4}
+                    />
+                  </View>
+                )}
+
                 <View style={styles.modalBtn}>
-                  <TouchableOpacity onPress={() => closeModal()}>
-                    <Text style={styles.resBtn}>Đóng</Text>
+                  <TouchableOpacity onPress={closeModal}>
+                    <Text style={styles.resBtn}>Thoát</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleRefuse(selected)}>
-                    <Text style={styles.resBtn}>Từ chối</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleAgree(selected)}>
-                    <Text style={styles.resBtn}>Đồng ý</Text>
-                  </TouchableOpacity>
+
+                  {!selected.grade && (
+                    <TouchableOpacity onPress={() => handleGrading(selected.id)}>
+                      <Text style={styles.resBtn}>Chấm điểm</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
-            </View>
+            )}
           </View>
-        </Modal>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
-
-export default AssignmentDetail;
 
 const styles = StyleSheet.create({
   container: {
@@ -196,11 +327,8 @@ const styles = StyleSheet.create({
   navTitle: {
     fontSize: 18,
     color: "white",
-  },
-  navbtn: {
-    fontSize: 18,
-    color: "white",
-    padding: 4,
+    flex: 1,
+    textAlign: "center",
   },
   descriptionContainer: {
     padding: 8,
@@ -208,6 +336,10 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 18,
     fontWeight: "bold",
+  },
+  label2: {
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   desText: {
     fontSize: 16,
@@ -223,6 +355,7 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 8,
+    flex: 1,
   },
   resContainer: {
     flexDirection: "row",
@@ -245,28 +378,36 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 8,
   },
-  resBtn : {
+  resBtn: {
     backgroundColor: "#d32f2f",
     color: "#FFF",
     padding: 8,
     borderRadius: 4,
   },
-
+  textInput: {
+    height: 40,
+    borderColor: "#B30000",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+  },
   modalBg: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  modalContainer : {
+  modalContainer: {
     backgroundColor: "#fff",
     width: "90%",
     borderRadius: 4,
+    maxHeight: "80%",
   },
-  modalHeader : {
+  modalHeader: {
     fontSize: 20,
-    fontWeight: '700',
-    backgroundColor: '#d32f2f',
+    fontWeight: "700",
+    backgroundColor: "#d32f2f",
     color: "#FFF",
     padding: 16,
     textAlign: "center",
@@ -276,35 +417,28 @@ const styles = StyleSheet.create({
   modalContent: {
     padding: 16,
   },
-  modalTitle : {
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: "center",
-    marginBottom: 8,
+  modalh1: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginVertical: 8,
   },
-  modalsup : {
+  modalsup: {
     opacity: 0.6,
     marginBottom: 4,
     textAlign: "center",
   },
-  modalh1 : {
-    fontSize: 16,
-    fontWeight: '700',
-    marginVertical: 8,
-  },
-  modalBtn : {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+  modalBtn: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
     gap: 16,
     marginTop: 32,
   },
-  image : {
-    width: 'auto',
-    height: 120,
-    resizeMode:'contain' ,
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#666",
   },
-  selectStatus : {
-    borderBlockColor: '#d32f2f',
-    borderBottomWidth: 1,
-  }
 });
+
+export default AssignmentDetail;

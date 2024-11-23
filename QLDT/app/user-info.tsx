@@ -3,15 +3,15 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } fro
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
+import { useAuth } from "@/Context/AuthProvider";
 
 const UserInfo = () => {
   const [editing, setEditing] = useState(false);
-  const [newName, setNewName] = useState('');
   const [newAvatar, setNewAvatar] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const router = useRouter();
-  const token = "FNq9V2";
-  const userId = "113";
+  const { token,accountId } = useAuth();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  console.log("token:",token,"accountid:",accountId)
   interface UserInfo {
     id: string;
     ho: string;
@@ -22,11 +22,14 @@ const UserInfo = () => {
     status: string;
     avatar: string | null;
   }
+  
+
+
   const fetchUserInfo = async () => {
     try {
       const response = await axios.post('http://157.66.24.126:8080/it4788/get_user_info', {
         token,
-        user_id: userId,
+        user_id: accountId,
       });
 
       if (response.data.code === "1000") {
@@ -39,15 +42,20 @@ const UserInfo = () => {
     }
   };
 
+  const getDirectImageUrl = (url: string) => {
+    const fileIdMatch = url.match(/\/d\/(.+?)\//);
+    return fileIdMatch ? `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}` : url;
+  };
+  
+
   const handleSaveChanges = async () => {
-    if (!newName.trim() && !newAvatar) {
-      Alert.alert('Error', 'Please provide a name or avatar to update.');
+    if (!newAvatar) {
+      Alert.alert('Error', 'Please select an avatar to update.');
       return;
     }
 
     const formData = new FormData();
-    formData.append('token', token);
-    formData.append('name', newName || userInfo?.name || '');
+    formData.append('token', token || '');
 
     if (newAvatar) {
       formData.append('file', {
@@ -56,7 +64,6 @@ const UserInfo = () => {
         name: 'avatar.jpg',
       } as unknown as Blob);
     }
-    
 
     try {
       const response = await axios.post('http://157.66.24.126:8080/it4788/change_info_after_signup', formData, {
@@ -64,14 +71,14 @@ const UserInfo = () => {
       });
 
       if (response.data.code === "1000") {
-        Alert.alert('Success', 'Information updated successfully!');
+        Alert.alert('Success', 'Avatar updated successfully!');
         setUserInfo(response.data.data);
         setEditing(false);
       } else {
         Alert.alert('Error', response.data.message);
       }
     } catch (error) {
-      console.error('Error updating user info:', error);
+      console.error('Error updating avatar:', error);
     }
   };
 
@@ -87,45 +94,42 @@ const UserInfo = () => {
     }
   };
 
+  // console.log('Avatar URL:', userInfo?.avatar);
+  // console.log('Direct Avatar URL:', getDirectImageUrl(userInfo?.avatar || ''));
+
   useEffect(() => {
     fetchUserInfo();
   }, []);
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.backIconContainer} onPress={() => router.push('/home_sv')}>
+        <Image source={require('../assets/images/arrow-back.png')} style={styles.backIcon} />
+      </TouchableOpacity>
       {userInfo ? (
         <>
           <View style={styles.avatarContainer}>
-            <Image
-              source={
-                newAvatar
-                  ? { uri: newAvatar.uri }
-                  : userInfo.avatar
-                  ? { uri: userInfo.avatar }
-                  : require('../assets/images/user.png')
-              }
-              style={styles.avatar}
-            />
+          <Image
+            source={
+              newAvatar
+                ? { uri: newAvatar.uri }
+                : userInfo.avatar
+                ? { uri: getDirectImageUrl(userInfo.avatar) }
+                : require('../assets/images/user.png') // Avatar mặc định
+            }
+            style={styles.avatar}
+          />
+
             {editing && (
               <TouchableOpacity style={styles.changeAvatarButton} onPress={handlePickImage}>
-                <Text style={styles.changeAvatarText}>Change</Text>
+                <Text style={styles.changeAvatarText}>Change Avatar</Text>
               </TouchableOpacity>
             )}
           </View>
 
           <View style={styles.infoContainer}>
             <Text style={styles.label}>Name:</Text>
-            {editing ? (
-              <TextInput
-                style={styles.input}
-                placeholder="Enter new name"
-                value={newName}
-                onChangeText={setNewName}
-              />
-            ) : (
-              
-              <Text style={styles.value}>{userInfo.name}</Text>
-            )}
+            <Text style={styles.value}>{userInfo.name}</Text>
 
             <Text style={styles.label}>Email:</Text>
             <Text style={styles.value}>{userInfo.email}</Text>
@@ -141,13 +145,12 @@ const UserInfo = () => {
             {editing ? (
               <>
                 <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
-                  <Text style={styles.buttonText}>Save Changes</Text>
+                  <Text style={styles.buttonText}>Save Avatar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => {
                     setEditing(false);
-                    setNewName('');
                     setNewAvatar(null);
                   }}
                 >
@@ -157,11 +160,15 @@ const UserInfo = () => {
             ) : (
               <>
                 <TouchableOpacity style={styles.editButton} onPress={() => setEditing(true)}>
-                  <Text style={styles.buttonText}>Edit Info</Text>
+                  <Text style={styles.buttonText}>Edit Avatar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.changePasswordButton} >
+                <TouchableOpacity
+                  style={styles.changePasswordButton}
+                  onPress={() => router.push('/change-password')} 
+                >
                   <Text style={styles.buttonText}>Change Password</Text>
                 </TouchableOpacity>
+
               </>
             )}
           </View>
@@ -177,13 +184,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#f9f9f9',
+    justifyContent:'center',
+    backgroundColor: '#921616',
   },
   avatarContainer: {
     alignItems: 'center',
     marginBottom: 20,
   },
-  avatar: {
+  backIconContainer: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 10, 
+  },
+  
+  backIcon: {
+    width: 24, 
+    height: 24, 
+    resizeMode: 'contain', 
+  },
+  
+  avatar: { 
     width: 100,
     height: 100,
     borderRadius: 50,
@@ -217,14 +238,6 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 16,
     color: '#555',
-    marginBottom: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
     marginBottom: 15,
   },
   actionsContainer: {

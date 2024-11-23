@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
-
+import { useAuth } from "@/Context/AuthProvider";
+import { useRouter } from 'expo-router';
 interface StudentAccount {
   account_id: number;
   last_name: string;
@@ -28,7 +29,8 @@ interface ClassDetailType {
 const ClassDetail = () => {
   const { classId } = useLocalSearchParams();
   const [classDetail, setClassDetail] = useState<ClassDetailType | null>(null);
-
+  const { token, accountId } = useAuth(); 
+  const router = useRouter();
   useEffect(() => {
     if (classId) {
       fetchClassDetail();
@@ -38,9 +40,9 @@ const ClassDetail = () => {
   const fetchClassDetail = async () => {
     try {
       const response = await axios.post('http://157.66.24.126:8080/it5023e/get_class_info', {
-        token: "0AuFtm",
+        token,
         role: "STUDENT",
-        account_id: "2",
+        account_id: accountId,
         class_id: classId,
       });
 
@@ -56,11 +58,23 @@ const ClassDetail = () => {
     }
   };
 
+  const handleRequestLeave = () => {
+    router.push({
+      pathname: '/absence-request',
+      params: { classId: classDetail?.class_id }, // Truyền classId
+    });
+  };
+
+  const handleDocuments = () => {
+    alert("Documents button clicked!");
+    // Implement the logic for accessing documents here
+  };
+
   return (
     <View style={styles.container}>
       {classDetail ? (
         <>
-          {/* Thông tin lớp học */}
+          {/* Class Information */}
           <View style={styles.classInfoCard}>
             <Text style={styles.classTitle}>{classDetail.class_name}</Text>
             <Text style={styles.classDetailText}>Lecturer: {classDetail.lecturer_name}</Text>
@@ -69,10 +83,10 @@ const ClassDetail = () => {
             <Text style={styles.classDetailText}>Status: {classDetail.status}</Text>
           </View>
 
-          {/* Tiêu đề danh sách sinh viên */}
+          {/* Students List Header */}
           <Text style={styles.subtitle}>Students</Text>
 
-          {/* Danh sách sinh viên */}
+          {/* Students List */}
           <FlatList
             data={classDetail.student_accounts}
             keyExtractor={(item) => item.account_id.toString()}
@@ -84,6 +98,16 @@ const ClassDetail = () => {
             )}
             ListEmptyComponent={<Text style={styles.emptyText}>No students available</Text>}
           />
+
+          {/* Action Buttons */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.actionButton} onPress={handleRequestLeave}>
+              <Text style={styles.buttonText}>Xin nghỉ học</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={handleDocuments}>
+              <Text style={styles.buttonText}>Tài liệu</Text>
+            </TouchableOpacity>
+          </View>
         </>
       ) : (
         <Text style={styles.loadingText}>Loading...</Text>
@@ -155,6 +179,24 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     marginVertical: 20,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  actionButton: {
+    flex: 0.48,
+    backgroundColor: '#007bff',
+    padding: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

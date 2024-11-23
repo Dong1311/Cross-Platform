@@ -10,6 +10,8 @@ export const AuthProvider = ({ children }) => {
   const [accountId, setAccountId] = useState(null);
   const [classList, setClassList] = useState(null);
   const [classId, setClassId] = useState(null);
+  const [assignmentsData, setAssignmentsData] = useState([]);
+
 
   // Hàm lưu token và lưu vào SecureStore
   const saveToken = async (newToken) => {
@@ -31,8 +33,21 @@ export const AuthProvider = ({ children }) => {
 
 
   const value = {
-    token,role,accountId,classId, setClassId,classList,setClassList, setRole, setAccountId, saveToken, loadToken, deleteToken,
-  }
+    token,
+    role,
+    accountId,
+    classId,
+    setClassId,
+    classList,
+    setClassList,
+    setRole,
+    setAccountId,
+    saveToken,
+    loadToken,
+    deleteToken,
+    assignmentsData,
+    setAssignmentsData,
+  };
 
   return (
     <AuthContext.Provider value={value}>

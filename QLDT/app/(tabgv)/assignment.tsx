@@ -8,8 +8,7 @@ import axios from 'axios';
 import { useAuth } from "@/Context/AuthProvider";
 
 const assignment = () => {
-  const { classId, token } = useAuth() as AuthContextType;
-  const [assignmentsData, setAssignmentsData] = useState([]);
+  const { classId, token , assignmentsData, setAssignmentsData } = useAuth() as AuthContextType;
   const [refreshing, setRefreshing] = useState(false); // State cho trạng thái làm mới
 
   interface AuthContextType {

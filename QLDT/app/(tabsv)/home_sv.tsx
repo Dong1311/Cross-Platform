@@ -19,7 +19,7 @@ interface ClassItem {
 
 const Home = () => {
   const [search, setSearch] = useState('');
-  const [classes, setClasses] = useState<ClassItem[]>([]); 
+  const [classes, setClasses] = useState<ClassItem[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -32,19 +32,32 @@ const Home = () => {
 
   const fetchClassList = async () => {
     try {
-      const response = await axios.post('http://160.30.168.228:8080/it5023e/get_class_list', {
-        token: "ad69Nl",
+      console.log("Fetching class list...");
+      const response = await axios.post('http://157.66.24.126:8080/it5023e/get_class_list', {
+        token: "FNq9V2",
         role: "STUDENT",
-        account_id: "157"
+        account_id: "24",
+        pageable_request: {
+          page: "0",
+          page_size: "100", // Tạm thời lấy tất cả lớp
+        },
       });
-
-      if (response.data.meta.code === 1000) {
-        setClasses(response.data.data);
+  
+      console.log("Response received:", response.data);
+  
+      // So sánh "1000" dưới dạng chuỗi
+      if (response.data.meta.code === "1000") {
+        setClasses(response.data.data.page_content);
+        console.log("Classes set successfully:", response.data.data.page_content);
       } else {
-        console.error("Failed to fetch classes:", response.data.meta.message);
+        console.error("Failed to fetch classes: Code not 1000", response.data.meta);
       }
     } catch (error) {
-      console.error("Error fetching class list:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error:", error.response?.data || error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
     }
   };
 
@@ -96,6 +109,7 @@ const Home = () => {
         )}
         renderItem={renderItem}
         keyExtractor={(item) => item.class_id}
+        ListEmptyComponent={<Text style={styles.emptyMessage}>Không có lớp nào</Text>}
       />
 
       <View style={styles.tabBar}>
@@ -115,13 +129,13 @@ const Home = () => {
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}>
-          <Icon name="calendar-today" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Lịch</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/documents-class')}>
           <Icons name="file-document-multiple" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Tài liệu</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info')}>
+          <Icon name="person" size={24} color="black" />
+          <Text style={styles.tabBarLabel}>Cá nhân</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -229,6 +243,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
   },
+  emptyMessage: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginVertical: 10,
+    color: 'gray',
+  },
+  
 });
 
 export default Home;

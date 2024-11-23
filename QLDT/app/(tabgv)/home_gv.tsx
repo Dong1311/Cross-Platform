@@ -11,8 +11,11 @@ const Home = () => {
   const [search, setSearch] = useState('');
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true); // State để quản lý trạng thái loading
-  const {token, role, accountId} = useAuth();
-
+  // const {token, role, accountId} = useAuth();
+  const role = 'LECTURER';
+  const token = 'qx9WF0';
+  const accountId = '273';
+  // Define style for the component
 
   interface ClassItem {
     class_id: string,
@@ -30,7 +33,7 @@ const Home = () => {
   const fetchClasses = async () => {
     try {
 
-      const res = await axios.post('http://160.30.168.228:8080/it5023e/get_class_list', {token, role, account_id : accountId});
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/get_class_list', {token, role, account_id : accountId});
 
       if(res.status === 200){
         setClasses(res.data.data);

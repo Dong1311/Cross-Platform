@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 
@@ -37,14 +37,16 @@ const ClassDetail = () => {
 
   const fetchClassDetail = async () => {
     try {
-      const response = await axios.post('http://160.30.168.228:8080/it5023e/get_class_info', {
-        token: "ad69Nl",
+      const response = await axios.post('http://157.66.24.126:8080/it5023e/get_class_info', {
+        token: "iiMe2e",
         role: "STUDENT",
         account_id: "2",
-        class_id: classId
+        class_id: classId,
       });
 
-      if (response.data.meta.code === 1000) {
+      console.log("API Response:", response.data); // Debug API response
+
+      if (response.data.meta.code === "1000") {
         setClassDetail(response.data.data);
       } else {
         console.error("Failed to fetch class detail:", response.data.meta.message);
@@ -55,7 +57,7 @@ const ClassDetail = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       {classDetail ? (
         <>
           {/* Thông tin lớp học */}
@@ -80,12 +82,13 @@ const ClassDetail = () => {
                 <Text style={styles.studentEmail}>{item.email}</Text>
               </View>
             )}
+            ListEmptyComponent={<Text style={styles.emptyText}>No students available</Text>}
           />
         </>
       ) : (
         <Text style={styles.loadingText}>Loading...</Text>
       )}
-    </ScrollView>
+    </View>
   );
 };
 
@@ -146,6 +149,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#888',
     marginTop: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+    marginVertical: 20,
   },
 });
 

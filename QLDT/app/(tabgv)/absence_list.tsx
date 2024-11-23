@@ -35,7 +35,7 @@ const AbsenceList = () => {
 
   const fetchAbsenceList = async () => {
     try {
-      const res = await axios.post('http://160.30.168.228:8080/it5023e/get_absence_requests', {token, class_id : classId, status });
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/get_absence_requests', {token, class_id : classId, status });
       if(res.status === 200) {
         setAbsenceList(res.data.data)
       }
@@ -57,7 +57,7 @@ const AbsenceList = () => {
 
   const handleAgree = async (selected : absenceData) => {
     try {
-      const res = await axios.post('http://160.30.168.228:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'ACCEPTED'});
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'ACCEPTED'});
       if(res.status === 200) {
         Alert.alert('Hoàn Thành', 'đồng ý đơn xin nghỉ thành công')
         fetchAbsenceList();
@@ -72,7 +72,7 @@ const AbsenceList = () => {
   
   const handleRefuse = async (selected : absenceData) => {
     try {
-      const res = await axios.post('http://160.30.168.228:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'REJECTED'});
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'REJECTED'});
       if(res.status === 200) {
         Alert.alert('Hoàn Thành', 'Từ chối đơn xin nghỉ thành công')
         fetchAbsenceList();

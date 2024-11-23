@@ -45,7 +45,7 @@ export default function App() {
       setLoading(true);
 
       const response = await axios.get(
-        "http://160.30.168.228:8080/it5023e/get_material_list",
+        "http://157.66.24.126:8080/it5023e/get_material_list",
         { params: { token, class_id: classId } }
       );
 
@@ -98,7 +98,7 @@ export default function App() {
   const handleDeleteDocument = async () => {
     if (selectedDocument) {
       try {
-        await axios.post("http://160.30.168.228:8080/it5023e/delete_material", {
+        await axios.post("http://157.66.24.126:8080/it5023e/delete_material", {
           token,
           material_id: selectedDocument.id,
         });
@@ -122,7 +122,7 @@ export default function App() {
         };
 
         console.log(updatedDocument)
-        await axios.post(`http://160.30.168.228:8080/it5023e/edit_material`, updatedDocument);
+        await axios.post(`http://157.66.24.126:8080/it5023e/edit_material`, updatedDocument);
 
         fetchDocuments();
         closeModal();
@@ -152,7 +152,7 @@ export default function App() {
         });
 
         const response = await axios.post(
-          "http://160.30.168.228:8080/it5023e/upload_material",
+          "http://157.66.24.126:8080/it5023e/upload_material",
           formdata,
           {
             headers: {
@@ -175,7 +175,7 @@ export default function App() {
   const handleOpenFile = async (id) => {
     try {
       const res = await axios.get(
-        "http://160.30.168.228:8080/it5023e/get_material_info",
+        "http://157.66.24.126:8080/it5023e/get_material_info",
         { params: { token, material_id: id } }
       );
       if (res.data.code === 1000) {

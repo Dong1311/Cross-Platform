@@ -43,6 +43,7 @@ export default function RootLayout() {
           <Stack.Screen name="documemts-class" options={{ headerShown: false }}/>
           <Stack.Screen name="GetVerifyCode" options={{ headerShown: false }} />
           <Stack.Screen name="CheckVerifyCode" options={{ headerShown: false }} />
+          <Stack.Screen name="user-info" options={{ headerShown: false }} />
 
           {/* <Stack.Screen name="(tabgv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabgv)/home_gv" options={{ headerShown: false }} />

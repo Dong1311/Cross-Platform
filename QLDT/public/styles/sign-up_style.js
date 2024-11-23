@@ -52,7 +52,8 @@ const styles = StyleSheet.create({
       color: 'white',
       fontSize: 14,
       textAlign: 'center',
-      marginTop: 10,
+      marginTop: 30,
+      marginVertical:10,
       textDecorationLine: 'underline',
     },
     errorText: {
@@ -69,6 +70,7 @@ const styles = StyleSheet.create({
       marginTop: 10, 
     },
     linkSpacing: {
+      marginTop: 10,
       marginVertical: 10, 
     },
     label: {
@@ -76,6 +78,7 @@ const styles = StyleSheet.create({
       marginBottom: 5,
       color: '#333', // Màu chữ nhãn nếu cần
     },
+
     largeInput: {
       height: 50, // Tăng chiều cao của ô nhập
       paddingHorizontal: 10,

@@ -1,194 +1,95 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Modal, Button, StyleSheet } from 'react-native';
+import styles from '../../public/styles/class_register_style';
+import { useRouter } from 'expo-router';
 
 interface ClassInfo {
-  subClassId: string;
-  classId: string;
-  className: string;
-  courseId: string;
-  startDate: string;
-  endDate: string;
-  maxStudents: number;
-  lecturerId: number;
-  classType: string;
-  studentIds: number[];
-  Id: string;
-  registrationStatus?: string;
+  class_id: string;
+  class_name: string;
+  lecturer_name: string;
 }
 
 const ClassRegistration = () => {
-  const [classCode, setClassCode] = useState('');
-  const [registeredClasses, setRegisteredClasses] = useState<ClassInfo[]>([]);
   const [availableClasses, setAvailableClasses] = useState<ClassInfo[]>([]);
-  const [modalVisible, setModalVisible] = useState(false); // Điều khiển Modal
-  const studentId = '105';
-  const [selectedClass, setSelectedClass] = useState<ClassInfo | null>(null); // Lớp được chọn để xóa
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false); // Modal xóa
+  const [selectedClasses, setSelectedClasses] = useState<ClassInfo[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const token = "FNq9V2";
+  const [classCode, setClassCode] = useState('');
+  const router = useRouter();
 
-  const fetchAvailableClasses = async () => {
+  const fetchAvailableClasses = async (requestedPage: number) => {
     try {
-      const response = await fetch('https://6706925aa0e04071d2276c8e.mockapi.io/tailieuhoctap/class');
-      const data = await response.json();
-  
-      // Cập nhật trạng thái đăng ký cho các lớp có `studentId`
-      const updatedClasses = data.map((classItem: ClassInfo) => {
-        if (classItem.studentIds.includes(parseInt(studentId))) {
-          return { ...classItem, registrationStatus: 'Đăng ký thành công' };
-        }
-        return { ...classItem, registrationStatus: 'Chưa đăng ký' };
+      const response = await fetch('http://157.66.24.126:8080/it5023e/get_open_classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          pageable_request: {
+            page: requestedPage.toString(),
+            page_size: "4",
+          },
+        }),
       });
-  
-      // Cập nhật cả availableClasses cho Modal và registeredClasses cho phần danh sách đăng ký
-      setAvailableClasses(updatedClasses); // Đặt danh sách các lớp mở
-      setRegisteredClasses(updatedClasses.filter((item: ClassInfo) => item.studentIds.includes(parseInt(studentId))));
-      setModalVisible(true); // Hiển thị Modal khi dữ liệu đã được tải
+
+      const data = await response.json();
+      console.log('API Response:', data);
+
+      if (data?.meta?.code === "1000") {
+        setAvailableClasses(data.data.page_content);
+        setTotalPages(parseInt(data.data.page_info.total_page));
+      } else {
+        console.error('Error fetching classes:', data.meta?.message || 'Unknown error');
+      }
     } catch (error) {
       console.error('Error fetching available classes:', error);
     }
   };
-  
-  <FlatList
-    data={availableClasses}  // Sử dụng đúng availableClasses trong Modal
-    keyExtractor={(item) => item.classId}
-    renderItem={({ item }) => (
-      <View style={styles.classRow}>
-        <Text style={styles.classRowText}>{item.classId}</Text>
-        <Text style={styles.classRowText}>{item.courseId}</Text>
-        <Text style={styles.classRowText}>{item.className}</Text>
-        <Text style={styles.classRowText}>
-          {item.studentIds?.length || 0}/{item.maxStudents}
-        </Text>
-        <Text style={styles.classRowText}>{item.classType}</Text>
-      </View>
-    )}
-    ListEmptyComponent={<Text>Không có lớp nào được mở</Text>}
-  />
-  
 
-  useEffect(() => {
-    fetchAvailableClasses(); // Tự động fetch dữ liệu khi màn hình được hiển thị
-  }, []);
+  const addClassToSelection = (selectedClass: ClassInfo) => {
+    if (!selectedClasses.some((cls) => cls.class_id === selectedClass.class_id)) {
+      setSelectedClasses([...selectedClasses, selectedClass]);
+    }
+    setModalVisible(false);
+  };
 
-  
-  // Thêm lớp vào danh sách đã đăng ký
-  const handleRegister = () => {
-    const foundClass = availableClasses.find(c => c.classId === classCode);
-    const alreadyRegistered = registeredClasses.find(c => c.classId === classCode);
-  
-    if (alreadyRegistered) {
-      alert('Lớp đã được đăng ký trong bảng');
+  const registerClasses = async () => {
+    const classIds = selectedClasses.map((cls) => cls.class_id);
+    if (classIds.length === 0) {
+      alert('Vui lòng chọn ít nhất một lớp để đăng ký.');
       return;
     }
-  
-    if (foundClass) {
-      const newClass: ClassInfo = {
-        ...foundClass,
-        registrationStatus: 'Đang chờ' // Trạng thái mặc định là "Đang chờ"
-      };
-      setRegisteredClasses([...registeredClasses, newClass]);
-      setClassCode('');
-    } else {
-      alert('Không tìm thấy lớp');
-    }
-  };
-  
-
-  const handleSubmit = async () => {
     try {
-      for (let c of registeredClasses) {
-        // Kiểm tra nếu trạng thái đăng ký chưa phải "Đăng ký thành công"
-        if (c.registrationStatus !== 'Đăng ký thành công') {
-          const currentStudents = c.studentIds?.length || 0;
-  
-          // Kiểm tra xem `studentId` đã có trong mảng `studentIds` hay chưa
-          if (!c.studentIds.includes(parseInt(studentId))) {
-            if (currentStudents < c.maxStudents) {
-              // Cập nhật `studentIds` với `studentId`
-              const updatedClass = { 
-                ...c, 
-                studentIds: [...c.studentIds, parseInt(studentId)], // Đảm bảo `studentId` là số
-                registrationStatus: 'Đăng ký thành công' 
-              };
-  
-              // Gửi yêu cầu PUT để cập nhật lớp trên MockAPI
-              const response = await fetch(`https://6706925aa0e04071d2276c8e.mockapi.io/tailieuhoctap/class/${c.Id}`, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updatedClass)
-              });
-  
-              if (response.ok) {
-                // Hiển thị thông báo đăng ký thành công
-                alert(`Đăng ký lớp ${c.classId} thành công`);
-              } else {
-                const errorData = await response.json();
-                console.error('API Error:', errorData); 
-                updatedClass.registrationStatus = 'Đăng ký thất bại';
-              }
-  
-              // Cập nhật danh sách lớp đã đăng ký với trạng thái
-              setRegisteredClasses((prevClasses) =>
-                prevClasses.map((cl) =>
-                  cl.classId === c.classId ? updatedClass : cl
-                )
-              );
-            } else {
-              alert(`Lớp ${c.classId} đã đủ sinh viên`);
-            }
-          } else {
-            alert(`Student đã đăng ký lớp ${c.classId} trước đó`);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error submitting registrations:', error);
-      alert('Đã xảy ra lỗi khi gửi đăng ký');
-    }
-  };
-  
-
-  const handleDeleteClass = async () => {
-    if (!selectedClass) return;
-  
-    try {
-      const updatedClass = {
-        ...selectedClass,
-        studentIds: selectedClass.studentIds.filter(id => id !== parseInt(studentId)) // Xóa `studentId` khỏi danh sách
-      };
-  
-      // Gửi yêu cầu cập nhật lên MockAPI
-      const response = await fetch(`https://6706925aa0e04071d2276c8e.mockapi.io/tailieuhoctap/class/${selectedClass.Id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedClass),
+      const response = await fetch('http://157.66.24.126:8080/it5023e/register_class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, class_ids: classIds }),
       });
-  
-      if (response.ok) {
-        // Xóa lớp khỏi danh sách đã đăng ký
-        setRegisteredClasses((prevClasses) =>
-          prevClasses.filter((cl) => cl.classId !== selectedClass.classId) // Xóa lớp khỏi bảng
-        );
-        alert('Xóa sinh viên khỏi lớp thành công');
+
+      const data = await response.json();
+      if (data.meta.code === "1000") {
+        alert('Đăng ký thành công các lớp: ' + classIds.join(', '));
+        router.push('/home_sv'); 
       } else {
-        alert('Đã xảy ra lỗi khi xóa');
+        alert('Đăng ký thất bại: ' + data.meta.message);
       }
     } catch (error) {
-      console.error('Error deleting student from class:', error);
-      alert('Đã xảy ra lỗi khi xóa');
-    } finally {
-      setDeleteModalVisible(false);
-      setSelectedClass(null); 
+      console.error('Error registering classes:', error);
     }
   };
+
+  useEffect(() => {
+    fetchAvailableClasses(page);
+  }, [page]);
 
   return (
     <View style={styles.container1}>
       {/* Tiêu đề */}
       <View style={styles.headerContainer}>
+      <TouchableOpacity onPress={() => router.push('/home_sv')} style={styles.backButton}>
+        <Text style={styles.backButtonText}>←</Text>
+      </TouchableOpacity>
         <Text style={styles.headerText}>HUST</Text>
         <Text style={styles.subHeaderText}>REGISTER FOR CLASS</Text>
       </View>
@@ -199,81 +100,65 @@ const ClassRegistration = () => {
           <TextInput
             style={styles.input}
             placeholder="Mã lớp"
-            value={classCode}
-            onChangeText={setClassCode}
           />
-          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-            <Text style={styles.buttonText}>Đăng ký</Text>
+          <TouchableOpacity style={styles.registerButton} onPress={() => {
+            if (!classCode.trim()) {
+              alert('Vui lòng nhập mã lớp.');
+              return;
+            }            
+            const foundClass = availableClasses.find(cls => cls.class_id === classCode);
+            if (foundClass) {
+              addClassToSelection(foundClass);
+            } else {
+              alert('Không tìm thấy lớp.');
+            }
+          }}>
+            <Text style={styles.buttonText}>Tìm kiếm</Text>
           </TouchableOpacity>
+
         </View>
 
         {/* Tiêu đề bảng */}
         <View style={styles.tableHeader}>
           <Text style={styles.tableHeaderText}>Mã lớp</Text>
-          <Text style={styles.tableHeaderText}>Mã lớp kèm</Text>
           <Text style={styles.tableHeaderText}>Tên lớp</Text>
-          <Text style={styles.tableHeaderText}>Trạng thái đăng ký</Text> 
+          <Text style={styles.tableHeaderText}>Giảng viên</Text> 
         </View>
 
         {/* Danh sách lớp đã đăng ký */}
         <FlatList
-          data={registeredClasses}
-          keyExtractor={(item) => item.classId}
+          data={selectedClasses}
+          keyExtractor={(item) => item.class_id}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => setSelectedClass(item)}>
+            <TouchableOpacity >
               <View style={[
                 styles.classRow,
-                selectedClass?.classId === item.classId ? styles.selectedRow : null // Thêm màu cho hàng được chọn
+                selectedClasses.some((cls) => cls.class_id === item.class_id) ? styles.selectedRow : null 
               ]}>
-                <Text style={styles.classRowText}>{item.classId}</Text>
-                <Text style={styles.classRowText}>{item.courseId}</Text>
-                <Text style={styles.classRowText}>{item.className}</Text>
-                <Text style={styles.classRowText}>{item.registrationStatus || 'Đang chờ'}</Text>
+                <Text style={styles.classRowText}>{item.class_id}</Text>
+                <Text style={styles.classRowText}>{item.class_name}</Text>
+                <Text style={styles.classRowText}>{item.lecturer_name }</Text>
               </View>
             </TouchableOpacity>
           )}
           ListEmptyComponent={<Text>Chưa có lớp nào được đăng ký</Text>}
         />
 
-
         {/* Các nút hành động */}
         <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+        <TouchableOpacity style={styles.submitButton} onPress={registerClasses}>
           <Text style={styles.buttonText}>Gửi đăng ký</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.deleteButtonContainer}
-          onPress={() => {
-            if (selectedClass) {
-              setDeleteModalVisible(true); // Hiển thị popup xác nhận khi nhấn "Xóa lớp"
-            } else {
-              alert('Vui lòng chọn một lớp để xóa');
-            }
-          }}
         >
           <Text style={styles.buttonText}>Xóa lớp</Text>
         </TouchableOpacity>
         </View>
 
-        <Modal
-          visible={deleteModalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setDeleteModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text>Bạn có chắc chắn muốn xóa?</Text>
-              <View style={styles.modalButtons}>
-                <Button title="Hủy" onPress={() => setDeleteModalVisible(false)} />
-                <Button title="Đồng ý" onPress={handleDeleteClass} />
-              </View>
-            </View>
-          </View>
-        </Modal>
         {/* Nút mở Modal hiển thị danh sách lớp mở */}
-        <TouchableOpacity onPress={fetchAvailableClasses}>
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Text style={styles.linkText}>Thông tin danh sách các lớp mở</Text>
         </TouchableOpacity>
 
@@ -286,175 +171,48 @@ const ClassRegistration = () => {
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalHeader}>Danh sách các lớp mở</Text>
-              <View style={styles.tableHeader}>
-                <Text style={styles.tableHeaderText}>Mã lớp</Text>
-                <Text style={styles.tableHeaderText}>Mã khóa</Text>
-                <Text style={styles.tableHeaderText}>Tên lớp</Text>
-                <Text style={styles.tableHeaderText}>Số sinh viên</Text>
-                <Text style={styles.tableHeaderText}>Loại lớp</Text>
-              </View>
-
+              <Text style={styles.modalHeader}>Danh Sách Các Lớp Mở</Text>
               <FlatList
                 data={availableClasses}
-                keyExtractor={(item) => item.classId}
+                keyExtractor={(item) => item.class_id}
                 renderItem={({ item }) => (
-                  <View style={styles.classRow}>
-                    <Text style={styles.classRowText}>{item.classId}</Text>
-                    <Text style={styles.classRowText}>{item.courseId}</Text>
-                    <Text style={styles.classRowText}>{item.className}</Text>
-                    <Text style={styles.classRowText}>
-                      {item.studentIds?.length || 0}/{item.maxStudents}
-                    </Text>
-                    <Text style={styles.classRowText}>{item.classType}</Text>
-                  </View>
+                  <TouchableOpacity onPress={() => addClassToSelection(item)}>
+                    <View style={styles.classRow}>
+                      <Text style={styles.classRowText}>{item.class_id}</Text>
+                      <Text style={styles.classRowText}>{item.class_name}</Text>
+                      <Text style={styles.classRowText}>{item.lecturer_name}</Text>
+                    </View>
+                  </TouchableOpacity>
                 )}
                 ListEmptyComponent={<Text>Không có lớp nào được mở</Text>}
               />
-
+              {/* Nút phân trang */}
+              <View style={styles.paginationContainer}>
+                <TouchableOpacity
+                  style={styles.paginationButton}
+                  onPress={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={page <= 1}
+                >
+                  <Text style={styles.paginationText}>Trước</Text>
+                </TouchableOpacity>
+                <Text style={styles.paginationText}>Trang {page} / {totalPages}</Text>
+                <TouchableOpacity
+                  style={styles.paginationButton}
+                  onPress={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={page >= totalPages}
+                >
+                  <Text style={styles.paginationText}>Sau</Text>
+                </TouchableOpacity>
+              </View>
               <Button title="Đóng" onPress={() => setModalVisible(false)} />
             </View>
           </View>
         </Modal>
 
-      </View>
-    </View>
+            </View>
+          </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container1: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container2: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  headerContainer: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    backgroundColor: '#b71c1c',
-  },
-  headerText: {
-    fontSize: 24,
-    color: '#ffff',
-    textAlign: 'center',
-    marginBottom: 10,
-    marginTop: 50,
-    fontWeight: 'bold',
-  },
-  subHeaderText: {
-    fontSize: 16,
-    color: '#ffff',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  input: {
-    flex: 0.7,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 4,
-    padding: 10,
-  },
-  registerButton: {
-    backgroundColor: '#b30000',
-    padding: 10,
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#b30000',
-    padding: 10,
-    borderRadius: 4,
-  },
-  tableHeaderText: {
-    flex: 1,  // Đảm bảo các cột có chiều rộng linh hoạt
-    textAlign: 'center',
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  classRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomColor: '#ccc',
-    borderBottomWidth: 1,
-  },
-  classRowText: {
-    flex: 1,
-    textAlign: 'center',
-  },
-  deleteButton: {
-    color: '#ff4d4d',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  submitButton: {
-    flex: 0.48,
-    backgroundColor: '#b30000',
-    paddingVertical: 10,
-    borderRadius: 4,
-    alignItems: 'center',
-  },
-  deleteButtonContainer: {
-    flex: 0.48,
-    backgroundColor: '#b30000',
-    paddingVertical: 10,
-    borderRadius: 4,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#b30000',
-    textAlign: 'center',
-    marginTop: 20,
-    textDecorationLine: 'underline',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    width: '90%',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-  },
-  modalHeader: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-
-  selectedRow: {
-    backgroundColor: '#e0e0e0', // Màu nền cho hàng đã chọn
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-
-});
 
 export default ClassRegistration;

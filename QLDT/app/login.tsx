@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {View, Text, TextInput, TouchableOpacity, Image, Modal,} from 'react-native';
-import { useRouter } from 'expo-router';  // Import useRouter để điều hướng
+import { useRouter } from 'expo-router'; 
+import { Link } from 'expo-router';
 
 import styles from '../public/styles/login_style';
 import axios from 'axios';
@@ -25,7 +26,7 @@ const Login = () => {
   const handleLogin = async () => {
     try {
 
-      const res = await axios.post('http://160.30.168.228:8080/it4788/login', {email,password,deviceId})
+      const res = await axios.post('http://157.66.24.126:8080/it4788/login', {email,password,deviceId})
       if(res.status === 200) {
         saveToken(res.data.data.token)
         setRole(res.data.data.role)
@@ -97,7 +98,9 @@ const Login = () => {
       <TouchableOpacity onPress={() => setModalVisible(true)}>
         <Text style={styles.forgotPassword}>Quên mật khẩu</Text>
       </TouchableOpacity>
-
+      <Link href="/sign-up" style={styles.linkSpacing}>
+        <Text style={styles.forgotPassword}>Đăng ký</Text>
+      </Link>
       {/* Modal Quên Mật Khẩu */}
       <Modal
         animationType="slide"

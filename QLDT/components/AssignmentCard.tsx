@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
@@ -8,6 +9,13 @@ const AssignmentCard = ({item}) => {
   const vietnamOffset = 7 * 60 * 60 * 1000;
   const vietnamTime = new Date(date.getTime() + vietnamOffset);
 
+  const handlePress = () => {
+    router.push({
+      pathname: '/assignment_detail',
+      params : item
+    })
+  }
+
   return (
     <View style={styles.container}>
       {/* Header with Date and Day */}
@@ -17,7 +25,7 @@ const AssignmentCard = ({item}) => {
       </View>
 
       {/* Task Card */}
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity style={styles.card} onPress={handlePress}>
         <View style={styles.iconContainer}>
           <Text style={styles.iconText}>{date.getDate()}</Text>
         </View>

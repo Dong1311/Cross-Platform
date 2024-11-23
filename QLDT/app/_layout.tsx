@@ -54,6 +54,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabgv)/view_attendance" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/assignment" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/create_assignment" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabgv)/assignment_detail" options={{ headerShown: false }} />
 
           {/* <Stack.Screen name="(tabsv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabsv)/home_sv" options={{ headerShown: false }} />

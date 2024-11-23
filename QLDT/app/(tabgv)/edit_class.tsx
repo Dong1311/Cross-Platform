@@ -218,23 +218,36 @@ const EditClass: React.FC = () => {
             { label: "COMPLETED", value: "COMPLETED" },
             { label: "UPCOMING", value: "UPCOMING" },
           ]}
-          style={pickerSelectStyles}
+          Icon={() => {
+            return <Ionicons name="caret-down" size={16} color="#d32f2f" />;
+          }}
+          style={{
+            ...pickerSelectStyles,
+            iconContainer: {
+              top: 16,
+              left: 320 ,
+            },
+          }}
           useNativeAndroidPickerStyle={false}
           value={classData.status}
         />
 
         <Text style={styles.label}>Ngày bắt đầu</Text>
         <TouchableOpacity
+          style={styles.inputDate}
           onPress={() => showDatePicker(classData.startDate, "startDate")}
         >
-          <Text style={styles.inputDate}>{classData.startDate}</Text>
+          <Text>{classData.startDate}</Text>
+          <Ionicons name="caret-down" size={16} color="#d32f2f" />
         </TouchableOpacity>
 
         <Text style={styles.label}>Ngày kết thúc</Text>
         <TouchableOpacity
+          style={styles.inputDate}
           onPress={() => showDatePicker(classData.endDate, "endDate")}
         >
-          <Text style={styles.inputDate}>{classData.endDate}</Text>
+          <Text >{classData.endDate}</Text>
+          <Ionicons name="caret-down" size={16} color="#d32f2f" />
         </TouchableOpacity>
 
         <View style={styles.actionButtons}>
@@ -297,13 +310,17 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   inputDate: {
-    height: 50,
-    borderColor: "#B30000",
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderColor: "#d32f2f",
     borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 15,
-    textAlignVertical: "center",
+    borderRadius: 4,
+    height: 50,
+    marginBottom: 12,
   },
   actionButtons: {
     flexDirection: "row",

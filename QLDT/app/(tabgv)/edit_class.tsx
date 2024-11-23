@@ -1,185 +1,341 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import RNPickerSelect from 'react-native-picker-select';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
+import RNPickerSelect from "react-native-picker-select";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { useAuth } from "@/Context/AuthProvider";
+import axios from "axios";
 
 const EditClass: React.FC = () => {
-  const [classId, setClassId] = useState('');
-  const [subClassId, setSubClassId] = useState('');
-  const [className, setClassName] = useState('');
-  const [courseId, setCourseId] = useState('');
-  const [classType, setClassType] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [maxStudents, setMaxStudents] = useState('');
+  const router = useRouter();
+  const [infoClass, setInfoClass] = useState<Partial<ClassItem>>({});
+  const { token, role, accountId, classList, classId, setClassList } = useAuth() as AuthContextType;
 
-  const handleEditClass = () => {
-    console.log('Class Created');
+  interface AuthContextType {
+    token: string;
+    role: string;
+    accountId: string;
+    classId :string;
+    setClassList: React.Dispatch<React.SetStateAction<ClassItem[]>>;
+    setClassId: React.Dispatch<React.SetStateAction<string>>;
+    classList: ClassItem[];
+  }
+  interface ClassItem {
+    class_id: string;
+    class_name: string;
+    attached_code: string;
+    class_type: string;
+    lecturer_name: string;
+    student_count: number;
+    start_date: string;
+    end_date: string;
+    status: string;
+  }
+
+  const [classData, setClassData] = useState({
+    classId: "",
+    className: "",
+    status: "",
+    startDate: "",
+    endDate: "",
+  });
+
+  useEffect(() => {
+
+    const selectedClass = classList.find(
+      (classItem) => classItem.class_id === classId
+    );
+    
+    if (selectedClass) {
+      setInfoClass(selectedClass);
+    }
+    
+  }, []);
+
+  useEffect(() => {
+    setClassData({
+      classId: (infoClass.class_id ) || "",
+      className: (infoClass.class_name ) || "",
+      status: (infoClass.status ) || "",
+      startDate: (infoClass.start_date ) || "",
+      endDate: (infoClass.end_date ) || "",
+    });
+  },[infoClass])
+
+  const showDatePicker = (
+    currentDate: string,
+    setDateField: "startDate" | "endDate"
+  ) => {
+    const parseDate = new Date(currentDate || Date.now());
+
+    DateTimePickerAndroid.open({
+      value: parseDate,
+      mode: "date",
+      is24Hour: true,
+      onChange: (event, selectedDate) => {
+        if (selectedDate) {
+          const formattedDate = selectedDate.toISOString().split("T")[0];
+          setClassData((prev) => ({
+            ...prev,
+            [setDateField]: formattedDate,
+          }));
+        }
+      },
+    });
+  };
+
+  const validateForm = () => {
+    const { className, status, startDate, endDate } = classData;
+
+    if (!className.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập tên lớp");
+      return false;
+    }
+
+    if (!status) {
+      Alert.alert("Lỗi", "Vui lòng chọn trạng thái");
+      return false;
+    }
+
+    if (!startDate) {
+      Alert.alert("Lỗi", "Vui lòng chọn ngày bắt đầu");
+      return false;
+    }
+
+    if (!endDate) {
+      Alert.alert("Lỗi", "Vui lòng chọn ngày kết thúc");
+      return false;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+      Alert.alert("Lỗi", "Ngày bắt đầu phải trước ngày kết thúc");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleEditClass = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const res = await axios.post(
+        "http://157.66.24.126:8080/it5023e/edit_class",
+        {
+          token,
+          class_id: classData.classId,
+          class_name: classData.className,
+          status: classData.status,
+          start_date: classData.startDate,
+          end_date: classData.endDate,
+        }
+      );
+      
+      if(res.data.meta.code === '1000') {
+        setClassList(classList.map(cls => 
+          cls.class_id === classData.classId 
+            ? { ...cls, ...res.data.data } 
+            : cls
+        ));
+        Alert.alert("Thành công", "Đã cập nhật lớp học");
+        router.back();
+      }
+    } catch (error : any) {
+      Alert.alert("Lỗi", "Không thể cập nhật lớp học");
+      console.log(error.response.data)
+    }
+  };
+
+  const handleDeleteClass = () => {
+    Alert.alert("Xác nhận xóa", "Bạn có chắc chắn muốn xóa lớp học này?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const res = await axios.post('http://157.66.24.126:8080/it5023e/delete_class', {token, role, account_id: accountId, class_id: classId})
+
+            if(res.data.meta.code === '1000'){
+              setClassList(classList.filter(cls => cls.class_id !== classData.classId));
+              console.log("Xóa lớp học:", classData.classId);
+              Alert.alert("Thành công", "Đã xóa lớp học");
+              router.replace('/home_gv');
+            }
+          } catch (error) {
+            Alert.alert("Lỗi", "Không thể xóa lớp học");
+          }
+        },
+      },
+    ]);
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>HUST</Text>
-        <Text style={styles.subHeaderText}>EDIT CLASS</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.navBar}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.navTitle}>Chỉnh sửa lớp học</Text>
+        <View style={styles.navPlaceholder} />
       </View>
-      <View style = {styles.bodyContainer}>
+
+      <View style={styles.bodyContainer}>
+        <Text style={styles.label}>Mã lớp</Text>
         <TextInput
+          editable={false}
           style={styles.input}
           placeholder="Mã lớp*"
-          value={classId}
-          onChangeText={setClassId}
+          value={classData.classId}
         />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Mã lớp kèm*"
-          value={subClassId}
-          onChangeText={setSubClassId}
-        />
-
+        <Text style={styles.label}>Tên lớp</Text>
         <TextInput
           style={styles.input}
           placeholder="Tên lớp*"
-          value={className}
-          onChangeText={setClassName}
+          value={classData.className}
+          onChangeText={(text) =>
+            setClassData((prev) => ({ ...prev, className: text }))
+          }
         />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Mã học phần*"
-          value={courseId}
-          onChangeText={setCourseId}
-        />
-
+        <Text style={styles.label}>Trạng thái</Text>
         <RNPickerSelect
-          onValueChange={setClassType}
+          onValueChange={(value) =>
+            setClassData((prev) => ({ ...prev, status: value }))
+          }
           items={[
-            { label: 'Lecture', value: 'Lecture' },
-            { label: 'Lab', value: 'Lab' },
-            { label: 'Seminar', value: 'Seminar' },
+            { label: "ACTIVE", value: "ACTIVE" },
+            { label: "COMPLETED", value: "COMPLETED" },
+            { label: "UPCOMING", value: "UPCOMING" },
           ]}
           style={pickerSelectStyles}
-          placeholder={{ label: 'Loại lớp*', value: null }}
+          useNativeAndroidPickerStyle={false}
+          value={classData.status}
         />
 
-        <RNPickerSelect
-          onValueChange={setStartDate}
-          items={[
-            { label: '09:00', value: '09:00' },
-            { label: '10:00', value: '10:00' },
-          ]}
-          style={pickerSelectStyles}
-          placeholder={{ label: 'Bắt đầu', value: null }}
-        />
+        <Text style={styles.label}>Ngày bắt đầu</Text>
+        <TouchableOpacity
+          onPress={() => showDatePicker(classData.startDate, "startDate")}
+        >
+          <Text style={styles.inputDate}>{classData.startDate}</Text>
+        </TouchableOpacity>
 
-        <RNPickerSelect
-          onValueChange={setEndDate}
-          items={[
-            { label: '11:00', value: '11:00' },
-            { label: '12:00', value: '12:00' },
-          ]}
-          style={pickerSelectStyles}
-          placeholder={{ label: 'Kết thúc', value: null }}
-        />
+        <Text style={styles.label}>Ngày kết thúc</Text>
+        <TouchableOpacity
+          onPress={() => showDatePicker(classData.endDate, "endDate")}
+        >
+          <Text style={styles.inputDate}>{classData.endDate}</Text>
+        </TouchableOpacity>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Số lượng sinh viên tối đa"
-          keyboardType="numeric"
-          value={maxStudents}
-          onChangeText={setMaxStudents}
-        />
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.button} onPress={handleEditClass}>
+          <TouchableOpacity
+            style={[styles.button, styles.deleteButton]}
+            onPress={handleDeleteClass}
+          >
             <Text style={styles.buttonText}>Xóa lớp này</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={handleEditClass}>
+          <TouchableOpacity
+            style={[styles.button, styles.saveButton]}
+            onPress={handleEditClass}
+          >
             <Text style={styles.buttonText}>Xác nhận</Text>
           </TouchableOpacity>
         </View>
-        
 
         <TouchableOpacity>
           <Text style={styles.linkText}>Thông tin danh sách các lớp mở</Text>
         </TouchableOpacity>
       </View>
-
-      
-      
-      
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginTop:0,
-    backgroundColor: '#fff',
-    flexGrow: 1,
-    justifyContent: 'center',
+    flex: 1,
+    backgroundColor: "#fff",
   },
-  headerContainer: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    backgroundColor: '#b71c1c'
+  navBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 20,
+    backgroundColor: "#d32f2f",
   },
-  bodyContainer:{
-    padding:20,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    backgroundColor: '#ffff'
+  navTitle: {
+    fontSize: 18,
+    color: "white",
   },
-  headerText: {
-    fontSize: 24,
-    color: '#ffff',
-    textAlign: 'center',
-    marginBottom: 10,
-    marginTop: 20,
-    fontWeight: 'bold',
+  navPlaceholder: {
+    width: 24,
   },
-  subHeaderText: {
+  label: {
     fontSize: 16,
-    color: '#ffff',
-    textAlign: 'center',
-    marginBottom: 20,
+    marginLeft: 4,
+    marginBottom: 4,
+  },
+  bodyContainer: {
+    padding: 20,
+    flex: 1,
   },
   input: {
     height: 50,
-    borderColor: '#B30000',
+    borderColor: "#B30000",
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 15,
   },
-  button: {
-    flex: 0.48,
-    backgroundColor: '#b30000',
-    paddingVertical: 10,
-    borderRadius: 4,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-  },
-  linkText: {
-    color: '#B30000',
-    textAlign: 'center',
-    marginTop: 15,
+  inputDate: {
+    height: 50,
+    borderColor: "#B30000",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    textAlignVertical: "center",
   },
   actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
+  },
+  button: {
+    flex: 0.48,
+    paddingVertical: 10,
+    borderRadius: 4,
+    alignItems: "center",
+  },
+  deleteButton: {
+    backgroundColor: "#b30000",
+  },
+  saveButton: {
+    backgroundColor: "#b30000",
+  },
+  buttonText: {
+    color: "#fff",
+  },
+  linkText: {
+    color: "#B30000",
+    textAlign: "center",
+    marginTop: 15,
   },
 });
 
 const pickerSelectStyles = {
-  
   inputIOS: {
     height: 50,
-    borderColor: '#B30000',
+    borderColor: "#B30000",
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
@@ -187,7 +343,7 @@ const pickerSelectStyles = {
   },
   inputAndroid: {
     height: 50,
-    borderColor: '#B30000',
+    borderColor: "#B30000",
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,

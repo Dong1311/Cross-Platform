@@ -66,7 +66,7 @@ const SignUpScreen = () => {
           uuid: 131103, // Sử dụng UUID cố định
           role: role?.toUpperCase(),
         };
-
+        console.log("UUID đã gửi:", userData.uuid);  // In UUID ra console để theo dõi
         const response = await fetch('http://157.66.24.126:8080/it4788/signup', {
           method: 'POST',
           headers: {

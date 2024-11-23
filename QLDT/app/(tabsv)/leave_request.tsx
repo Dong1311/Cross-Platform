@@ -6,21 +6,35 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useAuth } from "@/Context/AuthProvider";
+import * as DocumentPicker from "expo-document-picker";
+import axios from "axios";
+
 const LeaveRequestScreen: React.FC = () => {
   const [title, setTitle] = useState("");
-  const [recipient, setRecipient] = useState("");
   const [reason, setReason] = useState("");
   const [date, setDate] = useState<Date | null>(null);
+  const [file, setFile] = useState(null)
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const { token, role, accountId } = useAuth() as AuthContextType;
 
-  const handleFileUpload = () => {
-    // Xử lý tải minh chứng (mock function)
-    console.log("Upload file");
+  interface AuthContextType {
+    token: string;
+    role: string;
+    accountId: string;
+  }
+
+  const handleFileUpload = async () => {
+    const result = await DocumentPicker.getDocumentAsync();
+    if(!result.canceled) {
+      setFile(result);
+    } 
   };
 
   const handleDateSelection = () => {
@@ -34,9 +48,37 @@ const LeaveRequestScreen: React.FC = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Xử lý gửi yêu cầu nghỉ phép
-    console.log("Submit request");
+    try {
+      let formdata = new FormData();
+
+      formdata.append("token", token);
+      formdata.append("classId", "100000");
+      formdata.append("title", title);
+      formdata.append("reason", reason);
+      formdata.append("date",date.toISOString().split('T')[0] );
+      if (file) {
+        formdata.append("file", {
+          uri: file.assets[0].uri,
+          type: file.assets[0].mimeType ?? "",
+          name: file.assets[0].name,
+        });
+      }
+      const res = await axios.post('http://157.66.24.126:8080/it5023e/request_absence', formdata,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+      if(res.data.meta.code === '1000') {
+        Alert.alert("Thành công", 'Gửi thư xin phép nghỉ học thành công')
+        router.back()
+      }
+    } catch (error : any) {
+      console.log(error.response.data);
+      Alert.alert("Thất bại", error.response.data.meta.message)
+    }
   };
 
   return (
@@ -64,12 +106,7 @@ const LeaveRequestScreen: React.FC = () => {
             value={title}
             onChangeText={setTitle}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Gửi đến ai"
-            value={recipient}
-            onChangeText={setRecipient}
-          />
+        
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Lý do"
@@ -84,7 +121,7 @@ const LeaveRequestScreen: React.FC = () => {
             style={styles.uploadButton}
             onPress={handleFileUpload}
           >
-            <Text style={styles.uploadButtonText}>Tải minh chứng</Text>
+            <Text style={styles.uploadButtonText}>{ file ? `${file.assets[0].name}` :'Tải minh chứng' }</Text>
             <Ionicons name="caret-down" size={16} color="white" />
           </TouchableOpacity>
 

@@ -15,8 +15,9 @@ const Login = () => {
   const [forgotEmail, setForgotEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');  // State để lưu lỗi
   const router = useRouter();  // Khởi tạo useRouter
-  const deviceId = 1;
-  const { token, saveToken, setRole, setAccountId } = useAuth();
+  const device_id = 1;
+  const fcm_token = null;
+  const { saveToken, setRole, setAccountId } = useAuth();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -26,20 +27,21 @@ const Login = () => {
   const handleLogin = async () => {
     try {
 
-      const res = await axios.post('http://157.66.24.126:8080/it4788/login', {email,password,deviceId})
+      const res = await axios.post('http://157.66.24.126:8080/it4788/login', {email,password,device_id,fcm_token})
       if(res.status === 200) {
+        console.log(res.data.data.token)
         saveToken(res.data.data.token)
         setRole(res.data.data.role)
         setAccountId(res.data.data.id)
-        if(res.data.role === 'STUDENT') {
+        if(res.data.data.role === 'STUDENT') {
           router.push('/home_sv')
         } else {
           router.push('/home_gv')
         }
       } 
-    } catch (error) {
-      console.log(error)
-      setErrorMessage('email hoặc mật khẩu không đúng')
+    } catch (error : any) {
+      console.log(error.response.data)
+      setErrorMessage(error.response.data.message)
     }
   };
 

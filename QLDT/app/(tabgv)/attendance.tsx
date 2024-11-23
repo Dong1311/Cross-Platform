@@ -44,7 +44,8 @@ const Attendance = () => {
     try {
       const res = await axios.post('http://157.66.24.126:8080/it5023e/take_attendance',
          {token, class_id: classId, date : new Date(Date.now()).toISOString(), attendance_list : attendance})
-      if(res.data.meta.code === 1000) {
+      console.log(res.data)
+      if(res.data.meta.code === "1000") {
         router.back()
       }else {
         alert('Error: ' + res.data.meta.message)

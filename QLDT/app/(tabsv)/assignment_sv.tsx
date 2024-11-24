@@ -10,6 +10,9 @@ import {
 import Icon from "react-native-vector-icons/MaterialIcons";
 import Icons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Link, useRouter } from "expo-router";
+import axios from "axios";
+import { useAuth } from "@/Context/AuthProvider";
+import AssignmentCard from "@/components/AssignmentCard";
 
 // Định nghĩa kiểu Assignment
 interface Assignment {
@@ -33,6 +36,7 @@ const API_URL = "https://670fad74a85f4164ef2b6e89.mockapi.io/ehust/assignments";
 const AssignmentApp = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("upcoming");
+  const {token} = useAuth()
 
   const [assignmentsData, setAssignmentsData] = useState<AssignmentsData>({
     upcoming: [],
@@ -49,8 +53,7 @@ const AssignmentApp = () => {
   // Hàm fetch API và phân loại dữ liệu
   const fetchAssignments = async () => {
     try {
-      const response = await fetch(API_URL);
-      const data: Assignment[] = await response.json();
+      const response = await axios.post('http://157.66.24.126:8080/it5023e/get_student_assignments', {token});
 
       const now = getDateWithoutTime(new Date()); // Ngày hiện tại không có giờ, phút, giây
 
@@ -60,10 +63,10 @@ const AssignmentApp = () => {
       const tempCompleted: Assignment[] = [];
 
       // Phân loại bài tập
-      data.forEach((assignment) => {
-        const assignmentDate = getDateWithoutTime(new Date(assignment.date)); // Chuyển date từ API
+      response.data.data.forEach((assignment) => {
+        const assignmentDate = getDateWithoutTime(new Date(assignment.deadline)); // Chuyển date từ API
 
-        if (assignment.completed) {
+        if (assignment.is_submitted) {
           tempCompleted.push(assignment);
         } else if (assignmentDate < now) {
           tempOverdue.push(assignment);
@@ -78,7 +81,7 @@ const AssignmentApp = () => {
         overdue: tempOverdue,
         completed: tempCompleted,
       });
-      console.log(assignmentsData)
+
     } catch (error) {
       console.error("Lỗi khi fetch dữ liệu:", error);
     }
@@ -94,10 +97,11 @@ const AssignmentApp = () => {
       return <Text style={styles.noAssignments}>Không có bài tập nào</Text>;
     }
 
+
     // Nhóm bài tập theo ngày
     const groupedAssignments: { [key: string]: Assignment[] } = {};
     assignments.forEach((assignment) => {
-      const assignmentDate = new Date(assignment.date); // Chuyển đổi thành đối tượng Date
+      const assignmentDate = new Date(assignment.deadline); // Chuyển đổi thành đối tượng Date
       const dateString = assignmentDate.toLocaleDateString(); // Gọi toLocaleDateString() sau khi chuyển đổi
       if (!groupedAssignments[dateString]) {
         groupedAssignments[dateString] = [];
@@ -110,24 +114,19 @@ const AssignmentApp = () => {
         <Text style={styles.dateHeader}>{date}</Text>
        
           {groupedAssignments[date].map((assignment) => (
-            <TouchableOpacity 
-              key={assignment.id} 
-              style={styles.assignmentItem}
-              onPress={() => router.push(`/(tabsv)/submission/${assignment.id.toString()}`)} // Chuyển ID sang string
-            >
-              <Image
-                source={{ uri: assignment.classLogo }}
-                style={styles.classLogo}
-              />
-              <View style={styles.assignmentDetails}>
-                <Text style={styles.assignmentTitle}>{assignment.title}</Text>
-                <Text style={styles.assignmentDue}>{assignment.dueTime}</Text>
-                <Text style={styles.assignmentClassName}>{assignment.className}</Text>
-                {(assignment.points != null && assignment.points != 0) && (
-                  <Text style={styles.assignmentPoints}>{assignment.points} điểm</Text>
-                )}
-              </View>
-            </TouchableOpacity> // Đảm bảo rằng mỗi mục bài tập đều có thể nhấn
+             <TouchableOpacity style={styles.card} onPress={()=> router.push({
+              pathname: '/submission',
+              params: assignment,
+             })}>
+             <View style={styles.iconContainer}>
+               <Text style={styles.iconText}>{new Date(assignment.deadline).getDate()}</Text>
+             </View>
+             <View style={styles.textContainer}>
+               <Text style={styles.title}>{assignment.title}</Text>
+               <Text style={styles.subText}>{`Đến hạn lúc ${new Date(assignment.deadline).toLocaleTimeString().slice(0,5)}`}</Text>
+               <Text style={styles.subText}>{`Lớp ${assignment.class_id}`}</Text>
+             </View>
+           </TouchableOpacity>
           ))}
       </View>
     ));
@@ -137,8 +136,7 @@ const AssignmentApp = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Image source={{ uri: "" }} style={styles.userImage} />
-        <Text style={styles.title}>Bài tập</Text>
+        <Text style={styles.title2}>Bài tập</Text>
         {/* Tabs */}
         <View style={styles.tabs}>
           <Text
@@ -237,11 +235,11 @@ const styles = StyleSheet.create({
   },
   userImage: {
     width: 50,
-    height: 50,
+    height: 10,
     borderRadius: 25,
     marginBottom: 10,
   },
-  title: {
+  title2: {
     color: "#fff",
     fontSize: 20,
     fontWeight: "bold",
@@ -325,6 +323,47 @@ const styles = StyleSheet.create({
   tabBarLabel: {
     marginTop: 4,
     fontSize: 12,
+  },
+  card: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 8,
+  },
+  iconContainer: {
+    backgroundColor: '#D32F2F',
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 40,
+    width: 40,
+    marginRight: 10,
+  },
+  iconText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 6,
+  },
+  subText: {
+    fontSize: 14,
+    color: '#555',
   },
 });
 

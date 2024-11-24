@@ -1,216 +1,311 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker'; 
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  TextInput,
+  Linking,
+} from "react-native";
+import { RouteProp } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { router, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
+import axios from "axios";
+import { useAuth } from "@/Context/AuthProvider";
+
+// Define proper types for route params
+type RouteParams = {
+  id: string;
+  title: string;
+  deadline: string;
+  description: string;
+  file_url: string;
+};
 
 type SubmitAssignmentScreenProps = {
-  route: RouteProp<{ params: { id: string } }, 'params'>;
+  route: RouteProp<{ params: RouteParams }, "params">;
   navigation: StackNavigationProp<any, any>;
 };
 
-const SubmitAssignmentScreen: React.FC<SubmitAssignmentScreenProps> = ({ route, navigation }) => {
-  const { id } = route.params; // Lấy ID bài tập từ params
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+const SubmitAssignmentScreen: React.FC<SubmitAssignmentScreenProps> = () => {
+  const params = useLocalSearchParams<RouteParams>();
+  const [textResponse, setTextResponse] = useState<string>('');
+  const [file, setFile] = useState(null);
+  const { token } = useAuth();
 
-  // Test data for assignment (có thể thay bằng dữ liệu từ API)
-  const assignment = {
-    id: 1,
-    title: 'Bài tập Kiểm thử hộp đen',
-    dueTime: 'Đến hạn lúc 23:59',
-    className: '20241-C3-DBCL PM',
-    classLogo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkD2TROKcvLLnAh279xpe2PFqrcmvuN7KJCg&s',
-    points: 0,
-    date: new Date(2024, 9, 14),
-    guidelines: 'Hãy viết mã cho hàm kiểm tra NextDate theo nội dung yêu cầu như được mô tả trong bài giảng. Được sử dụng các ngôn ngữ lập trình đã học',
-  };
+  const handleUpFile = useCallback(async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync();
+      
+      if (!result.canceled) {
+        // Validate file size (e.g., max 10MB)
+        const fileSize = result.assets[0].size || 0;
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        
+        if (fileSize > maxSize) {
+          Alert.alert("Lỗi", "Kích thước file không được vượt quá 10MB");
+          return;
+        }
+        
+        setFile(result);
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể tải file. Vui lòng thử lại");
+    }
+  }, []);
 
+  const openURL = useCallback((url: string) => {
+    if (!url) {
+      Alert.alert("Lỗi", "URL không hợp lệ");
+      return;
+    }
+    Linking.openURL(url).catch((err) => {
+      console.error('An error occurred', err);
+      Alert.alert("Lỗi", "Không thể mở liên kết");
+    });
+  }, []);
 
-  const pickFile = async () => {
-  
-    let result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (result.granted === false) {
-      alert("Permission to access media library is required!");
+  const submitAssignment = useCallback(async () => {
+    if (!textResponse.trim() && !file) {
+      Alert.alert(
+        "Thiếu thông tin",
+        "Vui lòng nhập câu trả lời hoặc tải file lên."
+      );
       return;
     }
 
-
-    let picked = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!picked.canceled && picked.assets && picked.assets.length > 0) {
-      setSelectedFile(picked.assets[0].uri);
-    }    
-  };
-
-  // submit the assignment
-  const submitAssignment = async () => {
-    if (!selectedFile) {
-      Alert.alert("Chưa chọn file", "Vui lòng chọn một file trước khi nộp bài tập.");
+    if (!params.id) {
+      Alert.alert("Lỗi", "Không tìm thấy ID bài tập");
       return;
     }
 
     const formData = new FormData();
-    formData.append('assignmentId', id); // ID bài tập
-    formData.append('file', {
-      uri: selectedFile,
-      type: 'image/jpeg', // Đặt loại tệp, có thể thay đổi tùy theo loại tệp đã chọn
-      name: `submission_${id}.jpg`, // Tên tệp có thể thay đổi
-    });
+    formData.append('token', token);
+    formData.append("assignmentId", params.id);
+    formData.append('textResponse', textResponse.trim());
+
+    if (file && file.assets?.[0]) {
+      formData.append("file", {
+        uri: file.assets[0].uri,
+        type: file.assets[0].mimeType ?? "application/octet-stream",
+        name: file.assets[0].name,
+      } as any);
+    }
 
     try {
-      const response = await fetch('API_URL/submit_assignment', { 
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.post(
+        'http://157.66.24.126:8080/it5023e/submit_survey?file',
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          timeout: 30000,
+        }
+      );
 
-      const data = await response.json();
-      if (response.ok) {
-        Alert.alert("Thành công", "Bài tập đã được nộp thành công.");
-      
+      if (response.data?.meta?.code === '1000') {
+        Alert.alert("Thành công", "Bài tập đã được nộp thành công.", [
+          { text: "OK", onPress: () => router.back() }
+        ]);
       } else {
-        Alert.alert("Lỗi", data.message || "Có lỗi xảy ra khi nộp bài.");
+        throw new Error(response.data?.message || "Có lỗi xảy ra khi nộp bài");
       }
-    } catch (error) {
-      console.error('Error submitting assignment:', error);
-      Alert.alert("Lỗi", "Có lỗi xảy ra. Vui lòng thử lại.");
+    } catch (error: any) {
+      console.error("Error submitting assignment:", error);
+      Alert.alert(
+        "Lỗi",
+        error.message || "Có lỗi xảy ra. Vui lòng thử lại."
+      );
     }
-  };
+  }, [token, params.id, textResponse, file]);
+
+  const isSubmitDisabled = !textResponse.trim() && !file;
 
   return (
     <View style={styles.container}>
-      {/* Header displaying class info */}
-      <View style={styles.header}>
-        <Image source={{ uri: assignment.classLogo }} style={styles.classLogo} />
-        <View>
-          <Text style={styles.className}>{assignment.className}</Text>
-          <Text style={styles.assignmentTitle}>{assignment.title}</Text>
-        </View>
+      <View style={styles.navBar}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.navTitle} numberOfLines={1}>
+          {params.title}
+        </Text>
+        <View style={styles.navPlaceholder} />
       </View>
 
-      {/* Display assignment details */}
-      <View style={styles.detailsContainer}>
-        <Text style={styles.detailItem}>Due Time: {assignment.dueTime}</Text>
-        <Text style={styles.detailItem}>Points: {assignment.points}</Text>
-        <Text style={styles.detailItem}>Submission Date: {assignment.date.toDateString()}</Text>
-        <Text style={styles.guidelines}>Instructor's Guidelines:</Text>
-        <Text style={styles.guidelineText}>{assignment.guidelines}</Text>
-      </View>
-
-      {/* Button to attach a file */}
-      <TouchableOpacity style={styles.attachButton} onPress={pickFile}>
-        <Text style={styles.attachButtonText}>Đính kèm file</Text>
-      </TouchableOpacity>
-
-      {/* Display selected file (image or text) */}
-      {selectedFile && (
-        <View style={styles.selectedFileContainer}>
-          {selectedFile.match(/\.(jpeg|jpg|gif|png)$/) ? (
-            <Image source={{ uri: selectedFile }} style={styles.selectedImage} />
-          ) : (
-            <Text style={styles.fileText}>File đã chọn: {selectedFile}</Text>
+      <View style={styles.body}>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailItem}>
+            Hạn nộp: {new Date(params.deadline).toLocaleString('vi-VN')}
+          </Text>
+          <Text style={styles.guidelines}>Mô tả:</Text>
+          <Text style={styles.guidelineText}>{params.description}</Text>
+          {params.file_url && (
+            <TouchableOpacity 
+              style={styles.fileButton}
+              onPress={() => openURL(params.file_url)}
+            >
+              <Text style={styles.fileButtonText}>Tài liệu</Text>
+            </TouchableOpacity>
           )}
         </View>
-      )}
-
-      {/* Submit Button */}
-      <TouchableOpacity style={styles.submitButton} onPress={submitAssignment}>
-        <Text style={styles.submitButtonText}>Submit Assignment</Text>
-      </TouchableOpacity>
+        
+        {params.is_submitted === 'true' ? 
+          <Text style={[styles.guidelineText, {color: 'green', textAlign: 'center'}]}>Đã nộp bài</Text>
+        : 
+        <View>
+        <Text style={styles.label}>
+          Bài làm <Text style={styles.required}>*</Text>
+        </Text>
+        <TextInput
+          style={styles.inputdes}
+          placeholder="Nhập câu trả lời"
+          value={textResponse}
+          onChangeText={setTextResponse}
+          multiline
+          numberOfLines={4}
+          maxLength={1000}
+        />
+        <Text style={styles.orText}>Hoặc</Text>
+        <TouchableOpacity
+          style={styles.uploadButton}
+          onPress={handleUpFile}
+        >
+          <Text style={styles.uploadText}>
+            {file ? file.assets[0].name : "Tải tài liệu lên (PDF, DOC, DOCX...)"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            isSubmitDisabled && styles.disabledButton
+          ]}
+          onPress={submitAssignment}
+          disabled={isSubmitDisabled}
+        >
+          <Text style={styles.submitButtonText}>Nộp bài</Text>
+        </TouchableOpacity>
+      </View>
+        }
+        
+      </View>
     </View>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 16,
+    backgroundColor: '#f5f5f5',
+  },
+  body: {
     padding: 16,
-    backgroundColor: '#fff',
   },
-  header: {
-    padding: 20,
-    backgroundColor: '#fff',
-    alignItems: 'center',
+  fileButton: {
+    padding: 8,
+    backgroundColor: '#e0e0e0',
+    width: '30%',
+    borderRadius: 4,
   },
-  classLogo: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 16,
-  },
-  className: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  assignmentTitle: {
-    fontSize: 16,
-    color: '#555',
+  fileButtonText: {
+    textAlign: 'center',
+    color: '#333',
   },
   detailsContainer: {
-    marginBottom: 30,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
   },
   detailItem: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#333',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   guidelines: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 10,
+    marginBottom: 8,
   },
   guidelineText: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 20,
-  },
-  attachButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 15,
-    alignItems: 'center',
-    borderRadius: 5,
-    marginBottom: 20,
-  },
-  attachButtonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#555',
+    marginBottom: 16,
+    lineHeight: 24,
   },
-  selectedFileContainer: {
+  navBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#d32f2f',
+    elevation: 4,
   },
-  selectedImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  fileText: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 10,
+  navTitle: {
+    fontSize: 18,
+    color: 'white',
+    flex: 1,
     textAlign: 'center',
+    marginHorizontal: 16,
+  },
+  navPlaceholder: {
+    width: 24,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+    color: '#333',
+  },
+  required: {
+    color: '#d32f2f',
+  },
+  inputdes: {
+    height: 200,
+    fontSize: 16,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 4,
+    backgroundColor: '#fff',
+  },
+  orText: {
+    textAlign: 'center',
+    marginVertical: 12,
+    color: '#666',
+  },
+  uploadButton: {
+    backgroundColor: '#d32f2f',
+    padding: 15,
+    alignItems: 'center',
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  uploadText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   submitButton: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 15,
+    padding: 16,
     alignItems: 'center',
-    borderRadius: 5,
+    borderRadius: 8,
+    marginTop: 8,
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });
 

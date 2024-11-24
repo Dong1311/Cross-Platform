@@ -208,6 +208,27 @@ const EditAssignment = () => {
     }
   };
 
+  const handleDelete = async () => {
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post('http://157.66.24.126:8080/it5023e/delete_survey', {token, survey_id:params.id+''})
+
+      if(response.data.meta.code === '1000') {
+        setAssignmentsData(assignmentsData.filter(asg => asg.id !== Number(params.id)))
+        Alert.alert("Thành công", "Xóa bài tập thành công", [
+          { text: "OK", onPress: () => router.back() }
+        ]);
+      }
+    } catch (error : any) {
+      console.log(error.response.data)
+      Alert.alert("Lỗi", error.response.data.data);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const formatDateTime = (isoString: string) => {
     try {
       const date = new Date(isoString);
@@ -279,15 +300,26 @@ const EditAssignment = () => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={[styles.btnsubmit, loading && styles.disabledButton]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.uploadText}>
-              {loading ? "Đang xử lý..." : "Lưu thay đổi"}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.btnContainer}>
+            <TouchableOpacity
+              style={[styles.btnsubmit, loading && styles.disabledButton]}
+              onPress={handleDelete}
+              disabled={loading}
+            >
+              <Text style={styles.uploadText}>
+                {loading ? "Đang xử lý..." : "Xóa bài tập"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.btnsubmit, loading && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              <Text style={styles.uploadText}>
+                {loading ? "Đang xử lý..." : "Lưu thay đổi"}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </SafeAreaView>
@@ -400,10 +432,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 8,
     marginHorizontal: 16,
-    marginTop: 'auto',
     marginBottom: 16,
   },
   disabledButton: {
     opacity: 0.6,
   },
+  btnContainer : {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 'auto'
+  }
 });

@@ -29,7 +29,7 @@ interface ClassDetailType {
 const ClassDetail = () => {
   const { classId } = useLocalSearchParams();
   const [classDetail, setClassDetail] = useState<ClassDetailType | null>(null);
-  const { token, accountId } = useAuth(); 
+  const { token, accountId, setClassId} = useAuth(); 
   const router = useRouter();
   useEffect(() => {
     if (classId) {
@@ -66,8 +66,8 @@ const ClassDetail = () => {
   };
 
   const handleDocuments = () => {
-    alert("Documents button clicked!");
-    // Implement the logic for accessing documents here
+    setClassId(classId)
+    router.push('/documents-class')
   };
 
   return (

@@ -15,6 +15,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useAuth } from "@/Context/AuthProvider";
 import * as DocumentPicker from "expo-document-picker";
 import axios from "axios";
+import { useLocalSearchParams } from "expo-router";
 
 const LeaveRequestScreen: React.FC = () => {
   const [title, setTitle] = useState("");
@@ -23,7 +24,7 @@ const LeaveRequestScreen: React.FC = () => {
   const [file, setFile] = useState(null)
   const [showDatePicker, setShowDatePicker] = useState(false);
   const { token, role, accountId } = useAuth() as AuthContextType;
-
+  const { classId } = useLocalSearchParams();
   interface AuthContextType {
     token: string;
     role: string;
@@ -54,7 +55,7 @@ const LeaveRequestScreen: React.FC = () => {
       let formdata = new FormData();
 
       formdata.append("token", token);
-      formdata.append("classId", "100000");
+      formdata.append("classId", classId as string); 
       formdata.append("title", title);
       formdata.append("reason", reason);
       formdata.append("date",date.toISOString().split('T')[0] );

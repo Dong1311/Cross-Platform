@@ -5,6 +5,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#333', // Màu chữ
+  },
+  
   container2: {
     flex: 1,
     padding: 20,
@@ -46,7 +53,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#b30000',
     padding: 10,
     borderRadius: 4,
-    justifyContent: 'center',
+    // justifyContent: 'center',
+    justifyContent: 'space-between',
+
     alignItems: 'center',
   },
   buttonText: {
@@ -54,7 +63,7 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     backgroundColor: '#b30000',
     padding: 10,
     borderRadius: 4,
@@ -142,6 +151,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#b30000',
     padding: 10,
     borderRadius: 4,
+    marginBottom:15,
   },
   paginationText: {
     color: '#fff',
@@ -159,10 +169,49 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  
-  
-  
+  modalTableHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#b71c1c',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+  },
+  modalTableHeaderText: {
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    flex: 1,
+    minWidth: 80, // Chiều rộng tối thiểu
+  },
 
+  // Hàng trong bảng Modal
+  modalTableRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  modalTableCell: {
+    textAlign: 'center',
+    flex: 1,
+    minWidth: 80, // Cột có chiều rộng tối thiểu
+  },
+
+  modalColumn1: { flex: 1},
+  modalColumn2: { flex: 1 }, 
+  modalColumn3: { flex: 2}, 
+  modalColumn4: { flex: 1}, 
+  picker: {
+    height: 50,
+    width: 150,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginVertical: 10,
+  },
+  
 });
 
 export default styles;

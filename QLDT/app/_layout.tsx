@@ -43,6 +43,7 @@ export default function RootLayout() {
           <Stack.Screen name="GetVerifyCode" options={{ headerShown: false }} />
           <Stack.Screen name="CheckVerifyCode" options={{ headerShown: false }} />
           <Stack.Screen name="user-info" options={{ headerShown: false }} />
+          <Stack.Screen name="change-password" options={{ headerShown: false }} />
 
           {/* <Stack.Screen name="(tabgv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabgv)/home_gv" options={{ headerShown: false }} />
@@ -66,7 +67,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabsv)/class_register" options={{ headerShown: false }} />
           <Stack.Screen name="documents-class" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/notifications_screen" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabsv)/leave_request" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabsv)/absence-request" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/class_detail" options={{ headerShown: false }} />
         </Stack>
       </AuthProvider>

@@ -20,6 +20,12 @@ const ClassRegistration = () => {
   const [classCode, setClassCode] = useState("");
   const [registeredClasses, setRegisteredClasses] = useState<ClassInfo[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [allClasses, setAllClasses] = useState<ClassInfo[]>([]);
+
+  // console.log("All Classes:", allClasses);
+  // console.log("Searching for:", classCode);
+  // console.log("classCode nhập vào:", classCode);
+  // console.log("Danh sách allClasses:", allClasses.map(cls => cls.class_id));
 
   const { token } = useAuth();
   const combinedClasses = [
@@ -30,6 +36,43 @@ const ClassRegistration = () => {
   ];
   console.log(token);
   const router = useRouter();
+  const fetchAllClasses = async () => {
+    try {
+        let currentPage = 1;
+        let totalPages = 1;
+        let accumulatedClasses: ClassInfo[] = []; // Biến tạm để lưu danh sách tích lũy
+
+        do {
+            const response = await fetch('http://157.66.24.126:8080/it5023e/get_open_classes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token,
+                    pageable_request: {
+                        page: currentPage.toString(),
+                        page_size: "10", // Số lượng mỗi lần lấy
+                    },
+                }),
+            });
+
+            const data = await response.json();
+            if (data?.meta?.code === '1000') {
+                accumulatedClasses = [...accumulatedClasses, ...data.data.page_content]; // Gộp danh sách lớp mới
+                totalPages = parseInt(data.data.page_info.total_page);
+                currentPage++;
+            } else {
+                console.error('Error fetching classes:', data.meta?.message || 'Unknown error');
+                break;
+            }
+        } while (currentPage <= totalPages);
+
+        setAllClasses(accumulatedClasses); // Cập nhật toàn bộ danh sách vào state
+    } catch (error) {
+        console.error('Error fetching all classes:', error);
+    }
+};
+
+  
   const fetchRegisteredClasses = async () => {
     try {
       const response = await fetch("http://157.66.24.126:8080/it5023e/get_class_list", {
@@ -57,6 +100,10 @@ const ClassRegistration = () => {
     }
   };
 
+  useEffect(() => {
+    fetchAllClasses();
+  }, []);
+  
   
   
   const fetchAvailableClasses = async (requestedPage: number) => {
@@ -77,7 +124,6 @@ const ClassRegistration = () => {
       );
 
       const data = await response.json();
-      console.log("API Response:", data);
 
       if (data?.meta?.code === "1000") {
         setAvailableClasses(data.data.page_content);
@@ -159,7 +205,7 @@ const ClassRegistration = () => {
     fetchAvailableClasses(page);
   }, [page]);
   useEffect(() => {
-    fetchRegisteredClasses(); // Chỉ gọi một lần khi component render
+    fetchRegisteredClasses(); 
   }, []);
 
   return (
@@ -190,7 +236,9 @@ const ClassRegistration = () => {
             alert("Vui lòng nhập mã lớp.");
             return;
           }
-          const foundClass = availableClasses.find((cls) => cls.class_id === classCode);
+          const foundClass = allClasses.find(
+            (cls) => String(cls.class_id).trim() === String(classCode).trim()
+          );
           if (foundClass) {
             addClassToSelection(foundClass);
           } else {
@@ -200,6 +248,8 @@ const ClassRegistration = () => {
       >
         <Text style={styles.buttonText}>Tìm kiếm</Text>
       </TouchableOpacity>
+
+
 
 
         </View>

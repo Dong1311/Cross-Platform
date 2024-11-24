@@ -28,7 +28,7 @@ const Home = () => {
     setClassList: React.Dispatch<React.SetStateAction<ClassItem[]>>;
     classList: ClassItem[];
   }
-
+  console.log(token)
   interface ClassItem {
     class_id: string;
     class_name: string;
@@ -180,6 +180,10 @@ const Home = () => {
         <TouchableOpacity style={styles.tabBarButton}>
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info-gv')}>
+          <Icon name="person" size={24} color="black" />
+          <Text style={styles.tabBarLabel}>Cá nhân</Text>
         </TouchableOpacity>
       </View>
     </View>

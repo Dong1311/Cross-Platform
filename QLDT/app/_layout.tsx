@@ -34,9 +34,10 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
 
       <AuthProvider>
-        <Stack >
+        <Stack initialRouteName="index" >
           {/* Đặt màn hình mặc định */}
-          
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+
           <Stack.Screen name="sign-up" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
@@ -57,6 +58,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabgv)/create_assignment" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/assignment_detail" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/edit_assignment" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabgv)/user-info-gv" options={{ headerShown: false }} />
 
           {/* <Stack.Screen name="(tabsv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabsv)/home_sv" options={{ headerShown: false }} />
@@ -68,7 +70,7 @@ export default function RootLayout() {
           <Stack.Screen name="documents-class" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/notifications_screen" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/absence-request" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabsv)/class_detail" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabsv)/class_detail-sv" options={{ headerShown: false }} />
         </Stack>
       </AuthProvider>
     </ThemeProvider>

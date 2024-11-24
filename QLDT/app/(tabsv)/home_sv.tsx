@@ -42,7 +42,7 @@ const Home = () => {
   }, []);
 
   const handleClassPress = (classId: string) => {
-    router.push({ pathname: "/class_detail", params: { classId } });
+    router.push({ pathname: "/class_detail-sv", params: { classId } });
   };
 
   const fetchClassList = async () => {

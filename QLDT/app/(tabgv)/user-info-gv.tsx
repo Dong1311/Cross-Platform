@@ -114,16 +114,17 @@ const UserInfo = () => {
   };
 
   useEffect(() => {
-    fetchUserInfo();
-  }, []);
+    fetchUserInfo(); // Gọi thông tin người dùng dựa trên token và accountId
+  }, [token, accountId]); // Đảm bảo rằng nó luôn chạy khi token/accountId thay đổi
+  
 
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backIconContainer} onPress={() => router.push('/home_sv')}>
-        <Image source={require('../assets/images/arrow-back.png')} style={styles.backIcon} />
+        <Image source={require('../../assets/images/arrow-back.png')} style={styles.backIcon} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.logoutIconContainer} onPress={handleLogout}>
-        <Image source={require('../assets/images/logout.png')} style={styles.logoutIcon} />
+        <Image source={require('../../assets/images/logout.png')} style={styles.logoutIcon} />
       </TouchableOpacity>
       {userInfo ? (
         <>
@@ -134,7 +135,7 @@ const UserInfo = () => {
                 ? { uri: newAvatar.uri }
                 : userInfo.avatar
                 ? { uri: getDirectImageUrl(userInfo.avatar) }
-                : require('../assets/images/user.png') // Avatar mặc định
+                : require('../../assets/images/user.png') // Avatar mặc định
             }
             style={styles.avatar}
           />

@@ -46,7 +46,7 @@ const ClassDetail = () => {
         class_id: classId,
       });
 
-      console.log("API Response:", response.data); // Debug API response
+      // console.log("API Response:", response.data); 
 
       if (response.data.meta.code === "1000") {
         setClassDetail(response.data.data);

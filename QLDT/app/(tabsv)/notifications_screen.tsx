@@ -8,67 +8,65 @@ import {
   StatusBar,
   TouchableOpacity,
 } from "react-native";
-import { router, Stack } from "expo-router";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
+import { useAuth } from "@/Context/AuthProvider";
 
 interface Notification {
   id: number;
-  subject: string;
   message: string;
-  date: string;
+  status: string;
+  from_user: number;
+  to_user: number;
+  type: string;
+  sent_time: string;
+  title_push_notification: string;
 }
 
 const NotificationsScreen: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { token } = useAuth();
+
+  const fetchNotifications = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.post("http://157.66.24.126:8080/it5023e/get_notifications", {
+        token,
+        index: 0,
+        count: 10,
+      });
+
+      if (response.data.meta.code === "1000") {
+        setNotifications(response.data.data);
+      } else {
+        setError(response.data.meta.message || "Error fetching notifications.");
+      }
+    } catch (err) {
+      setError("Failed to fetch notifications. Please try again later.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // fetchNotifications();
-
-    // Mock data for notifications
-    const mockNotifications: Notification[] = [
-      {
-        id: 1,
-        subject: "Phân tích và thiết kế hệ thống",
-        message: "Đã có điểm cuối kỳ môn Phân tích và thiết kế hệ thống",
-        date: "10/07/2024",
-      },
-      {
-        id: 2,
-        subject: "Phân tích và thiết kế hệ thống",
-        message: "Đã có điểm giữa kỳ môn Phân tích và thiết kế hệ thống",
-        date: "09/07/2024",
-      },
-      {
-        id: 3,
-        subject: "Thuật toán ứng dụng",
-        message: "Đã có điểm môn quá trình Thuật toán ứng dụng",
-        date: "05/07/2024",
-      },
-      {
-        id: 4,
-        subject:
-          "Hội thảo tuyển dụng thực tập sinh của Tập Đoàn Sumitomo Electric",
-        message:
-          "Tham gia hội thảo tuyển dụng thực tập sinh của Tập Đoàn Sumitomo Electric",
-        date: "24/06/2024",
-      },
-    ];
-
-    // Simulate fetching data
-    setTimeout(() => {
-      setNotifications(mockNotifications);
-      setLoading(false);
-    }, 1000); // Simulate delay
+    fetchNotifications();
   }, []);
 
   const renderNotification = ({ item }: { item: Notification }) => (
     <View style={styles.notificationBox}>
-      <Text style={styles.title}>{item.subject}</Text>
+      <Text style={styles.title}>{item.title_push_notification}</Text>
       <Text style={styles.message}>{item.message}</Text>
-      <Text style={styles.date}>{item.date}</Text>
+      <Text style={styles.date}>
+        {new Date(item.sent_time).toLocaleDateString()} -{" "}
+        {new Date(item.sent_time).toLocaleTimeString()}
+      </Text>
     </View>
   );
 

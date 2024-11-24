@@ -13,9 +13,7 @@ const Attendance = () => {
   const [students, setStudents] = useState([])
   const params = useLocalSearchParams();
   const {classId, token, accountId, role} = useAuth();
-
-
-  const getStudents = async () => {
+    const getStudents = async () => {
     try {
       const res = await axios.post('http://157.66.24.126:8080/it5023e/get_class_info', {token,role, account_id : accountId, class_id : classId})
       if(res.status === 200) {
@@ -25,7 +23,6 @@ const Attendance = () => {
       console.log(error);
     }
   }
-
 
   useEffect(()=>{
     getStudents();
@@ -63,7 +60,10 @@ const Attendance = () => {
         },
         {
           text: 'Lưu',
-          onPress: handleSendList,
+          onPress: async () => {
+            await handleSendList(); // Gửi danh sách điểm danh
+            await handleSendNotifications(); // Gửi thông báo sau khi điểm danh
+          },
           style: 'default',
         },
       ],
@@ -72,6 +72,83 @@ const Attendance = () => {
       }
     )
   }
+  
+
+  const handleSendNotifications = async () => {
+    try {
+      const today = new Date();
+      const formattedDate = `${today.getDate()}/${
+        today.getMonth() + 1
+      }/${today.getFullYear()}`;
+  
+      if (!token || !classId) {
+        console.error("Token or classId is missing!");
+        return;
+      }
+  
+      if (!attendance.length) {
+        alert("Danh sách vắng mặt trống!");
+        return;
+      }
+  
+      // Tìm `account_id` tương ứng với mỗi `student_id`
+      const accountIds = attendance
+        .map((studentId) => {
+          const student = students.find((s) => s.student_id === studentId);
+          return student?.account_id; // Trả về account_id hoặc undefined nếu không tìm thấy
+        })
+        .filter((id) => id); // Lọc ra các giá trị hợp lệ (loại bỏ undefined)
+  
+      if (!accountIds.length) {
+        console.error("No valid account IDs found!");
+        return;
+      }
+  
+      for (const accountId of accountIds) {
+        const formData = new FormData();
+        formData.append("token", token);
+        formData.append(
+          "message",
+          `Bạn đã vắng mặt lớp học ${classId} vào ngày ${formattedDate}.`
+        );
+        formData.append("toUser", accountId);
+        formData.append("type", "ABSENCE");
+  
+        console.log("Sending notification to account ID:", accountId);
+  
+        try {
+          const response = await axios.post(
+            "http://157.66.24.126:8080/it5023e/send_notification",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+  
+          if (response.data.meta.code === "1000") {
+            console.log(`Notification sent to user ${accountId}`);
+          } else {
+            console.error(
+              `Failed to send notification to ${accountId}: ${response.data.meta.message}`
+            );
+          }
+        } catch (error) {
+          console.error(
+            `Error sending notification to ${accountId}:`,
+            error.response?.data || error.message
+          );
+        }
+      }
+  
+      alert("Đã gửi thông báo đến tất cả sinh viên vắng mặt.");
+    } catch (error) {
+      console.error("Error sending notifications:", error);
+    }
+  };
+  
+  
 
   const renderStudent = ({item}) => {
 

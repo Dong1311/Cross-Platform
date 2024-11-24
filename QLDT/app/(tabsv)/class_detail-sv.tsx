@@ -36,7 +36,7 @@ const ClassDetail = () => {
       fetchClassDetail();
     }
   }, [classId]);
-
+  console.log("token",token,"classid: ",classId)
   const fetchClassDetail = async () => {
     try {
       const response = await axios.post('http://157.66.24.126:8080/it5023e/get_class_info', {

@@ -28,7 +28,6 @@ const Home = () => {
     setClassList: React.Dispatch<React.SetStateAction<ClassItem[]>>;
     classList: ClassItem[];
   }
-  console.log(token)
   interface ClassItem {
     class_id: string;
     class_name: string;
@@ -155,12 +154,17 @@ const Home = () => {
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <FlatList
-          data={classList.filter((cls) =>
-            cls.class_name.toLowerCase().includes(search.toLowerCase())
-          )}
+          data={
+            classList
+              ? classList.filter((cls) =>
+                  cls.class_name.toLowerCase().includes(search.toLowerCase())
+                )
+              : []
+          }
           renderItem={renderItem}
           keyExtractor={(item) => item.class_id}
         />
+
       )}
 
       {/* Thanh điều hướng dưới */}

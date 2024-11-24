@@ -15,7 +15,7 @@ const AbsenceList = () => {
   const [absenceList, setAbsenceList] = useState([]);
   const {token, classId} = useAuth() as AuthContextType;
   const [status, setStatus] = useState('PENDING')
-
+  // console.log(token,classId)
   interface absenceData {
     id: number;
     student_account: StudentAccount;
@@ -69,34 +69,120 @@ const AbsenceList = () => {
     Linking.openURL(url).catch((err) => console.error('An error occurred', err));
   };
 
-  const handleAgree = async (selected : absenceData) => {
+  const sendNotification = async ({
+    token,
+    toUser,
+    type,
+    absence_date,
+    classId,
+    actionMessage, // Thông báo cụ thể: "đã được chấp nhận" hoặc "đã bị từ chối"
+  }: {
+    token: string;
+    toUser: string;
+    type: string;
+    absence_date: string;
+    classId: string;
+    actionMessage: string;
+  }) => {
     try {
-      const res = await axios.post('http://157.66.24.126:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'ACCEPTED'});
-      if(res.status === 200) {
-        Alert.alert('Hoàn Thành', 'đồng ý đơn xin nghỉ thành công')
-        fetchAbsenceList();
-        setModalVisible(false);
-      }
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Thất bại', 'có lỗi sảy ra, hãy thử lại')
-    }
-    
-  }
+      const formData = new FormData();
+      formData.append("token", token);
+      formData.append(
+        "message",
+        `Đơn xin nghỉ học ngày ${absence_date} lớp ${classId} ${actionMessage}.`
+      );
+      formData.append("toUser", toUser);
+      formData.append("type", type);
   
-  const handleRefuse = async (selected : absenceData) => {
-    try {
-      const res = await axios.post('http://157.66.24.126:8080/it5023e/review_absence_request', {token, request_id : selected.id, status: 'REJECTED'});
-      if(res.status === 200) {
-        Alert.alert('Hoàn Thành', 'Từ chối đơn xin nghỉ thành công')
-        fetchAbsenceList();
-        setModalVisible(false);
+      const res = await axios.post(
+        "http://157.66.24.126:8080/it5023e/send_notification",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+  
+      if (res.data.meta.code === "1000") {
+        console.log(`Thông báo gửi thành công tới tài khoản ${toUser}`);
+      } else {
+        console.error(
+          `Lỗi gửi thông báo tới tài khoản ${toUser}: ${res.data.meta.message}`
+        );
       }
     } catch (error) {
-      console.log(error);
-      Alert.alert('Thất bại', 'có lỗi sảy ra, hãy thử lại')
+      console.error(`Lỗi khi gửi thông báo tới tài khoản ${toUser}:`, error);
     }
-  }
+  };
+
+  const handleAgree = async (selected: absenceData) => {
+    try {
+      // Đồng ý đơn xin nghỉ
+      const res = await axios.post(
+        "http://157.66.24.126:8080/it5023e/review_absence_request",
+        {
+          token,
+          request_id: selected.id,
+          status: "ACCEPTED",
+        }
+      );
+  
+      if (res.status === 200) {
+        Alert.alert("Hoàn Thành", "Đồng ý đơn xin nghỉ thành công");
+  
+        // Gửi thông báo
+        await sendNotification({
+          token,
+          toUser: selected.student_account.account_id.toString(),
+          type: "ACCEPT_ABSENCE_REQUEST",
+          absence_date: selected.absence_date,
+          classId,
+          actionMessage: "đã được chấp nhận",
+        });
+  
+        fetchAbsenceList(); // Làm mới danh sách
+        setModalVisible(false); // Đóng modal
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Thất bại", "Có lỗi xảy ra, hãy thử lại");
+    }
+  };
+
+  const handleRefuse = async (selected: absenceData) => {
+    try {
+      // Từ chối đơn xin nghỉ
+      const res = await axios.post(
+        "http://157.66.24.126:8080/it5023e/review_absence_request",
+        {
+          token,
+          request_id: selected.id,
+          status: "REJECTED",
+        }
+      );
+  
+      if (res.status === 200) {
+        Alert.alert("Hoàn Thành", "Từ chối đơn xin nghỉ thành công");
+  
+        // Gửi thông báo
+        await sendNotification({
+          token,
+          toUser: selected.student_account.account_id.toString(),
+          type: "REJECT_ABSENCE_REQUEST",
+          absence_date: selected.absence_date,
+          classId,
+          actionMessage: "đã bị từ chối",
+        });
+  
+        fetchAbsenceList(); // Làm mới danh sách
+        setModalVisible(false); // Đóng modal
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Thất bại", "Có lỗi xảy ra, hãy thử lại");
+    }
+  };
 
   useEffect(() => {
     fetchAbsenceList();

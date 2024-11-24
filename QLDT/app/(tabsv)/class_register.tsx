@@ -34,7 +34,7 @@ const ClassRegistration = () => {
       (cls) => !registeredClasses.some((reg) => reg.class_id === cls.class_id)
     ),
   ];
-  console.log(token);
+  // console.log(token);
   const router = useRouter();
   const fetchAllClasses = async () => {
     try {
@@ -237,8 +237,9 @@ const ClassRegistration = () => {
             return;
           }
           const foundClass = allClasses.find(
-            (cls) => String(cls.class_id).trim() === String(classCode).trim()
+            (cls) => String(cls.class_id).trim() == String(classCode).trim()
           );
+          
           if (foundClass) {
             addClassToSelection(foundClass);
           } else {

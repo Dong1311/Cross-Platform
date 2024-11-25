@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+        }
+        #chat-container {
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        #messages {
+            border: none;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 15px;
+            border-radius: 5px;
+            position: relative;
+            font-size: 1.1em;
+        }
+        .sent {
+            background-color: #e0f7fa;
+            text-align: right;
+            margin-left: 50px;
+        }
+        .received {
+            background-color: #ffe0b2;
+            text-align: left;
+            margin-right: 50px;
+        }
+        .message-info {
+            font-size: 0.8em;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .timestamp {
+            font-size: 0.6em;
+            color: #aaa;
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+        }
+        #loginForm, #messageForm {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            background-color: #e0e0e0;
+            border-top: 1px solid #ccc;
+        }
+        #loginForm input, #messageForm input, #messageForm textarea {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 0.9em;
+        }
+        #email, #password {
+            width: 200px;
+        }
+        #messageForm input {
+            flex: 0 0 70px;
+            margin: 0 5px;
+        }
+        #messageForm textarea {
+            flex: 1;
+            resize: none;
+            font-size: 1.2em;
+            height: 40px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #conversationList {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .conversation-item {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .conversation-item:hover {
+            background-color: #f0f0f0;
+        }
+        #userIdDisplay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px;
+            border-radius: 5px;
+            display: none; /* Initially hidden */
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Application</h1>
+    <div id="userIdDisplay"></div> <!-- User ID display -->
+    <div id="chat-container">
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" value="123456" required>
+            <button type="submit">Login</button>
+        </form>
+
+        <div id="messages" style="display: none;"></div>
+
+        <form id="messageForm" style="display: none;">
+            <input type="number" id="receiver" placeholder="Receiver ID" required>
+            <textarea id="content" placeholder="Type your message..." required></textarea>
+            <button type="submit">Send</button>
+        </form>
+
+        <div id="conversationList" style="display: none;"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script>
+        let stompClient = null; 
+        let userId = null; // Variable to store the user ID
+        let token = null; // Variable to store the token
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        function displayMessage(msg) {
+            const messagesDiv = document.getElementById('messages');
+            const msgElement = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+
+            msgElement.classList.add('message', msg.sender.id === userId ? 'sent' : 'received');
+            msgElement.innerHTML = `
+                <div class="message-info">${msg.sender.id === userId ? 'You' : msg.sender.id} to ${msg.receiver.id}:</div>
+                <div>${msg.content}</div>
+                <div class="timestamp">${timestamp}</div>
+            `;
+
+            messagesDiv.appendChild(msgElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; 
+        }
+
+        function sendMessage(receiverId, content) {
+            const message = { 
+                receiver: { id: receiverId }, 
+                content: content,
+                sender: emailInput.value, // Send the email as sender
+                token: token // Include the token in the message
+            };
+            console.log('Sending message:', message);
+            stompClient.send("/chat/message", {}, JSON.stringify(message));
+        }
+
+        function connect() {
+            const socket = new SockJS('http://157.66.24.126:8080/ws'); 
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe(`/user/${userId}/inbox`, function (message) {
+                    const msg = JSON.parse(message.body);
+                    console.log('Received message from inbox:', msg);
+                    displayMessage(msg);
+                });
+
+                document.getElementById('messages').style.display = 'block'; 
+                document.getElementById('messageForm').style.display = 'flex'; 
+                fetchConversations(); // Fetch conversations after connecting
+            });
+        }
+
+        function fetchConversations() {
+            const conversationList = document.getElementById('conversationList');
+            conversationList.style.display = 'block'; 
+            // You can add logic here to fetch conversations and populate the list
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function (event) {
+            event.preventDefault(); 
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            fetch('http://157.66.24.126:8080/it4788/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors',
+                body: JSON.stringify({ 
+                    email: email, 
+                    password: password,
+                    device_id: 9990,
+                    fcm_token: "cZfyAQARQkiJCU2d9cqHbL:APA91bGf2goAIdGPE4-n9o5tvkFGvwf9T8NL5Klfj958z2apNzsRWhnFWJ_sMaDrqDXSnR8Z0--3LhzFT2cm1FRNtjeDtkVfOcAMSvREzfSDYirAjhNJf48"
+                })
+            })
+            .then(response => response.json())
+            .then(res => {
+                data = res.data;
+                if (data.id) {
+                    userId = data.id; // Store the user ID
+                    token = data.token; // Store the received token
+                    document.getElementById('userIdDisplay').innerText = `User ID: ${userId}`; // Display User ID
+                    document.getElementById('userIdDisplay').style.display = 'block'; // Show the User ID display
+                    connect(); // Connect to the WebSocket after a successful login
+                } else {
+                    console.error('Login failed:', data);
+                    alert('Login failed. Please check your credentials.');
+                }
+            })
+            .catch(error => {
+                console.error('Error during login:', error);
+                alert('Error during login. Please try again.');
+            });
+        });
+
+        document.getElementById('messageForm').addEventListener('submit', function (event) {
+            event.preventDefault(); 
+            const receiverId = parseInt(document.getElementById('receiver').value);
+            const content = document.getElementById('content').value;
+
+            sendMessage(receiverId, content); 
+            document.getElementById('content').value = ''; 
+        });
+    </script>
+</body>
+</html>

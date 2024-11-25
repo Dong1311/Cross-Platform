@@ -44,7 +44,7 @@ const AssignmentDetail = () => {
   const [surveyRes, setSurveyRes] = useState<SurveyResponse[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selected, setSelected] = useState<SurveyResponse | null>(null);
-  const [grade, setGrade] = useState('');
+  const [grade, setGrade] = useState("");
 
   // Set initial assignment data
   useEffect(() => {
@@ -110,8 +110,9 @@ const AssignmentDetail = () => {
           },
         }
       );
-      
+
       if (res.data.meta.code === "1000") {
+        await handleSendNotifications();
         Alert.alert("Thành công", "Chấm điểm thành công");
         closeModal();
         getSurveyResponse(); // Refresh the data after grading
@@ -122,6 +123,43 @@ const AssignmentDetail = () => {
         error?.response?.data?.meta?.message || "Không thể chấm điểm"
       );
       console.error("Error grading submission:", error);
+    }
+  };
+
+  const handleSendNotifications = async () => {
+    const formData = new FormData();
+    formData.append("token", token);
+    formData.append(
+      "message",
+      `Điểm bài tập của bạn bài ${params.title} là ${grade}.`
+    );
+    formData.append("toUser", selected.student_account.account_id);
+    formData.append("type", "ASSIGNMENT_GRADE");
+
+    try {
+      const response = await axios.post(
+        "http://157.66.24.126:8080/it5023e/send_notification",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      
+      console.log(response.data)
+      if (response.data.meta.code === "1000") {
+        console.log(`Notification sent to user ${selected.student_account.account_id}`);
+      } else {
+        console.error(
+          `Failed to send notification to ${selected.student_account.account_id}: ${response.data.meta.message}`
+        );
+      }
+    } catch (error : any) {
+      console.error(
+        `Error sending notification to ${selected.student_account.account_id}:`,
+        error.response?.data || error.message
+      );
     }
   };
 
@@ -168,9 +206,9 @@ const AssignmentDetail = () => {
     return (
       <View style={styles.resContainer}>
         <View>
-          <Text
-            style={styles.resName}
-          >{`${item.student_account?.first_name || ''} ${item.student_account?.last_name || ''}`}</Text>
+          <Text style={styles.resName}>{`${
+            item.student_account?.first_name || ""
+          } ${item.student_account?.last_name || ""}`}</Text>
           <Text>{`Nộp lúc: ${new Date(
             item.submission_time
           ).toLocaleString()}`}</Text>
@@ -207,7 +245,9 @@ const AssignmentDetail = () => {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>{params.title || "Chi tiết bài tập"}</Text>
+        <Text style={styles.navTitle}>
+          {params.title || "Chi tiết bài tập"}
+        </Text>
         <TouchableOpacity
           onPress={() =>
             router.push({
@@ -222,7 +262,9 @@ const AssignmentDetail = () => {
 
       <View style={styles.descriptionContainer}>
         <Text style={styles.label}>Hướng dẫn:</Text>
-        <Text style={styles.desText}>{assignment.description || "Không có hướng dẫn"}</Text>
+        <Text style={styles.desText}>
+          {assignment.description || "Không có hướng dẫn"}
+        </Text>
         {assignment.file_url && (
           <TouchableOpacity onPress={() => openURL(assignment.file_url)}>
             <Text style={styles.desBtn}>Tài liệu hướng dẫn</Text>
@@ -238,9 +280,7 @@ const AssignmentDetail = () => {
           keyExtractor={(item) => String(item.id)}
           renderItem={renderSurveyRes}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              Chưa có sinh viên nào nộp bài
-            </Text>
+            <Text style={styles.emptyText}>Chưa có sinh viên nào nộp bài</Text>
           }
         />
       </View>
@@ -259,20 +299,24 @@ const AssignmentDetail = () => {
             {selected && (
               <View style={styles.modalContent}>
                 <Text style={styles.modalsup}>
-                  {`${selected.student_account?.first_name || ''} ${
-                    selected.student_account?.last_name || ''
-                  } - ${selected.student_account?.student_id || ''}`}
+                  {`${selected.student_account?.first_name || ""} ${
+                    selected.student_account?.last_name || ""
+                  } - ${selected.student_account?.student_id || ""}`}
                 </Text>
                 <Text style={styles.modalsup}>{`Điểm: ${
                   selected.grade ? `${selected.grade}` : "Chưa chấm điểm"
                 }`}</Text>
                 <View>
                   <Text style={styles.modalh1}>Bài làm</Text>
-                  <Text style={{ marginLeft: 8 }}>{selected.text_response || "Không có nội dung"}</Text>
+                  <Text style={{ marginLeft: 8 }}>
+                    {selected.text_response || "Không có nội dung"}
+                  </Text>
                 </View>
                 {selected.file_url && (
                   <View style={{ marginTop: 8 }}>
-                    <TouchableOpacity onPress={() => openURL(selected.file_url)}>
+                    <TouchableOpacity
+                      onPress={() => openURL(selected.file_url)}
+                    >
                       <Text style={styles.desBtn}>File bài làm</Text>
                     </TouchableOpacity>
                   </View>
@@ -298,7 +342,9 @@ const AssignmentDetail = () => {
                   </TouchableOpacity>
 
                   {!selected.grade && (
-                    <TouchableOpacity onPress={() => handleGrading(selected.id)}>
+                    <TouchableOpacity
+                      onPress={() => handleGrading(selected.id)}
+                    >
                       <Text style={styles.resBtn}>Chấm điểm</Text>
                     </TouchableOpacity>
                   )}

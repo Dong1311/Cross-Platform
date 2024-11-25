@@ -7,6 +7,7 @@ import {
   Alert,
   TextInput,
   Linking,
+  ActivityIndicator,
 } from "react-native";
 import { RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -35,6 +36,7 @@ const SubmitAssignmentScreen: React.FC<SubmitAssignmentScreenProps> = () => {
   const [textResponse, setTextResponse] = useState<string>('');
   const [file, setFile] = useState(null);
   const { token } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleUpFile = useCallback(async () => {
     try {
@@ -95,6 +97,8 @@ const SubmitAssignmentScreen: React.FC<SubmitAssignmentScreenProps> = () => {
       } as any);
     }
 
+    setIsSubmitting(true);
+
     try {
       const response = await axios.post(
         'http://157.66.24.126:8080/it5023e/submit_survey?file',
@@ -120,6 +124,8 @@ const SubmitAssignmentScreen: React.FC<SubmitAssignmentScreenProps> = () => {
         "Lỗi",
         error.message || "Có lỗi xảy ra. Vui lòng thử lại."
       );
+    } finally {
+      setIsSubmitting(false);
     }
   }, [token, params.id, textResponse, file]);
 
@@ -176,19 +182,20 @@ const SubmitAssignmentScreen: React.FC<SubmitAssignmentScreenProps> = () => {
           onPress={handleUpFile}
         >
           <Text style={styles.uploadText}>
-            {file ? file.assets[0].name : "Tải tài liệu lên (PDF, DOC, DOCX...)"}
+            {file ? file.assets[0].name : "Tải tài liệu lên (PDF, DOC, DOCX...)"}  
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.submitButton,
-            isSubmitDisabled && styles.disabledButton
-          ]}
-          onPress={submitAssignment}
-          disabled={isSubmitDisabled}
-        >
-          <Text style={styles.submitButtonText}>Nộp bài</Text>
-        </TouchableOpacity>
+            style={[styles.submitButton, isSubmitDisabled && styles.disabledButton]}
+            onPress={submitAssignment}
+            disabled={isSubmitDisabled || isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>Nộp bài</Text>
+            )}
+          </TouchableOpacity>
       </View>
         }
         

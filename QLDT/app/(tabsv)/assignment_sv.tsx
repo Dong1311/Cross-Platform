@@ -123,7 +123,7 @@ const AssignmentApp = () => {
              </View>
              <View style={styles.textContainer}>
                <Text style={styles.title}>{assignment.title}</Text>
-               <Text style={styles.subText}>{`Đến hạn lúc ${new Date(assignment.deadline).toLocaleTimeString().slice(0,5)}`}</Text>
+               <Text style={styles.subText}>{`Đến hạn lúc ${new Date(assignment.deadline).toLocaleTimeString().slice(0, 5)}`}</Text>
                <Text style={styles.subText}>{`Lớp ${assignment.class_id}`}</Text>
              </View>
            </TouchableOpacity>
@@ -195,28 +195,16 @@ const AssignmentApp = () => {
           <Icon name="group" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Nhóm</Text>
         </TouchableOpacity>
-        {/* <Link href="/assignment_sv" style={{ zIndex: 10 }}>
-          <TouchableOpacity style={styles.tabBarButton}>
-            <Icon name="assignment" size={24} color="black" />
-            <Text style={styles.tabBarLabel}>Bài tập</Text>
-          </TouchableOpacity>
-        </Link> */}
-        {/* <TouchableOpacity style={styles.tabBarButton}> */}
+
         <TouchableOpacity style={styles.tabBarButton}
         >
           <Icon name="assignment" size={24} color="purple" />
           <Text style={[styles.tabBarLabel, { color: "purple" }]}>Bài tập</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}>
-          <Icon name="calendar-today" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Lịch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabBarButton}
-          onPress={() => router.push("/documents-class")}
-        >
-          <Icons name="file-document-multiple" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Tài liệu</Text>
+       
+        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info')}>
+          <Icon name="person" size={24} color="black" />
+          <Text style={styles.tabBarLabel}>Cá nhân</Text>
         </TouchableOpacity>
       </View>
     </View>

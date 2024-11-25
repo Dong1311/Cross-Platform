@@ -186,7 +186,7 @@ const AssignmentApp = () => {
           <Text style={styles.tabBarLabel}>Hoạt động</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarButton}
-        onPress={()=>router.push('/(tabsv)/leave_request')}>
+        onPress={()=>router.push('/chat-screen')}>
           <Icon name="chat" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Trò chuyện</Text>
         </TouchableOpacity>

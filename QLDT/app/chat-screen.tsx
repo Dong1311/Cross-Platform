@@ -1,110 +1,111 @@
-// import React, { useState, useEffect } from 'react';
-// import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
-// import { useAuth } from '../Context/AuthProvider'; // Lấy useAuth
-// import { connectSocket, sendMessage, disconnectSocket } from '../utils/websocket'; // Module WebSocket
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
 
-// interface Message {
-//   sender: { id: number };
-//   receiver: { id: number };
-//   content: string;
-// }
+const ChatScreen: React.FC = () => {
+  // Quản lý danh sách tin nhắn
+  const [messages, setMessages] = useState([
+    { id: 1, sender: 'me', content: 'Xin chào, bạn khỏe không?' },
+    { id: 2, sender: 'other', content: 'Xin chào, mình khỏe. Còn bạn?' },
+    { id: 3, sender: 'me', content: 'Mình cũng khỏe. Dạo này thế nào rồi?' },
+    { id: 4, sender: 'other', content: 'Vẫn ổn bạn ạ, cảm ơn bạn đã hỏi!' },
+  ]);
 
-// const ChatScreen: React.FC = () => {
-//   const { accountId, token } = useAuth(); // Lấy thông tin từ AuthContext
-//   const [messages, setMessages] = useState<Message[]>([]);
-//   const [content, setContent] = useState('');
-//   const [receiverId, setReceiverId] = useState('');
+  // Quản lý nội dung tin nhắn mới
+  const [newMessage, setNewMessage] = useState('');
 
-//   useEffect(() => {
-//     if (!accountId || !token) return;
+  // Xử lý khi gửi tin nhắn
+  const handleSendMessage = () => {
+    if (newMessage.trim() === '') return; // Không gửi nếu nội dung rỗng
 
-//     connectSocket(parseInt(accountId, 10), (msg: Message) => {
-//       setMessages((prevMessages) => [...prevMessages, msg]);
-//     });
+    const newMessageObj = {
+      id: messages.length + 1, // Tạo ID mới
+      sender: 'me', // Người gửi là "me"
+      content: newMessage.trim(),
+    };
 
-//     return () => disconnectSocket();
-//   }, [accountId, token]);
+    setMessages((prevMessages) => [...prevMessages, newMessageObj]); // Cập nhật danh sách tin nhắn
+    setNewMessage(''); // Xóa nội dung trong input sau khi gửi
+  };
 
-//   const handleSendMessage = () => {
-//     if (!content || !receiverId) return;
+  return (
+    <View style={styles.container}>
+      {/* Hiển thị danh sách tin nhắn */}
+      <FlatList
+        data={messages}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View
+            style={
+              item.sender === 'me' ? styles.messageSent : styles.messageReceived
+            }
+          >
+            <Text style={styles.messageText}>{item.content}</Text>
+          </View>
+        )}
+        contentContainerStyle={styles.messageList}
+      />
 
-//     sendMessage(parseInt(receiverId, 10), content, token!);
-//     setMessages((prevMessages) => [
-//       ...prevMessages,
-//       { sender: { id: parseInt(accountId!) }, receiver: { id: parseInt(receiverId, 10) }, content },
-//     ]);
-//     setContent('');
-//   };
+      {/* Input để nhập tin nhắn */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Nhập tin nhắn..."
+          value={newMessage}
+          onChangeText={setNewMessage} // Cập nhật nội dung khi người dùng nhập
+        />
+        <Button title="Gửi" color="#b30000" onPress={handleSendMessage} />
+      </View>
+    </View>
+  );
+};
 
-//   return (
-//     <View style={styles.container}>
-//       <FlatList
-//         data={messages}
-//         keyExtractor={(item, index) => index.toString()}
-//         renderItem={({ item }) => (
-//           <View style={item.sender.id === parseInt(accountId!) ? styles.sent : styles.received}>
-//             <Text>{item.content}</Text>
-//           </View>
-//         )}
-//         contentContainerStyle={styles.messageList}
-//       />
-//       <View style={styles.inputContainer}>
-//         <TextInput
-//           style={styles.input}
-//           placeholder="Receiver ID"
-//           value={receiverId}
-//           onChangeText={setReceiverId}
-//           keyboardType="numeric"
-//         />
-//         <TextInput
-//           style={styles.input}
-//           placeholder="Message"
-//           value={content}
-//           onChangeText={setContent}
-//         />
-//         <Button title="Send" onPress={handleSendMessage} />
-//       </View>
-//     </View>
-//   );
-// };
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+  },
+  messageList: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+    paddingVertical: 10,
+  },
+  messageSent: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#b30000',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    maxWidth: '70%',
+  },
+  messageReceived: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#ff6666',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    maxWidth: '70%',
+  },
+  messageText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    fontSize: 16,
+    marginRight: 10,
+    backgroundColor: '#f5f5f5',
+  },
+});
 
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     padding: 10,
-//     backgroundColor: '#f9f9f9',
-//   },
-//   messageList: {
-//     flexGrow: 1,
-//     justifyContent: 'flex-end',
-//   },
-//   inputContainer: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     marginBottom: 10,
-//   },
-//   input: {
-//     flex: 1,
-//     borderWidth: 1,
-//     borderColor: '#ccc',
-//     borderRadius: 5,
-//     padding: 8,
-//     marginHorizontal: 5,
-//   },
-//   sent: {
-//     alignSelf: 'flex-end',
-//     backgroundColor: '#d1f5d3',
-//     padding: 10,
-//     borderRadius: 5,
-//     marginBottom: 5,
-//   },
-//   received: {
-//     alignSelf: 'flex-start',
-//     backgroundColor: '#f5d1d1',
-//     padding: 10,
-//     borderRadius: 5,
-//     marginBottom: 5,
-//   },
-// });
-
-// export default ChatScreen;
+export default ChatScreen;

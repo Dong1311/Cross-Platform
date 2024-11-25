@@ -142,7 +142,7 @@ const Home = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabBarButton}
-          onPress={() => router.push("/(tabsv)/absence-request")}
+          onPress={() => router.push("/chat-screen")}
         >
           <Icon name="chat" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Trò chuyện</Text>

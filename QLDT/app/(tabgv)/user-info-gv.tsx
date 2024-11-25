@@ -120,7 +120,7 @@ const UserInfo = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backIconContainer} onPress={() => router.push('/home_sv')}>
+      <TouchableOpacity style={styles.backIconContainer} onPress={() => router.back()}>
         <Image source={require('../../assets/images/arrow-back.png')} style={styles.backIcon} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.logoutIconContainer} onPress={handleLogout}>

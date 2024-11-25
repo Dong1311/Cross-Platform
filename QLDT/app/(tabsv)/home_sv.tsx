@@ -158,13 +158,7 @@ const Home = () => {
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabBarButton}
-          onPress={() => router.push("/documents-class")}
-        >
-          <Icons name="file-document-multiple" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Tài liệu</Text>
-        </TouchableOpacity>
+    
         <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info')}>
           <Icon name="person" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Cá nhân</Text>
@@ -233,6 +227,13 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     padding: 16,
     alignItems: "center",
+    width: "96%",
+    margin: "auto",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   classIcon: {
     width: 50,

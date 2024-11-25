@@ -212,7 +212,7 @@ const ClassRegistration = () => {
     <View style={styles.container1}>
       {/* Tiêu đề */}
       <View style={styles.headerContainer}>
-      <TouchableOpacity onPress={() => router.push('/home_sv')} style={styles.backButton}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
         <Text style={styles.backButtonText}>←</Text>
       </TouchableOpacity>
         <Text style={styles.headerText}>HUST</Text>

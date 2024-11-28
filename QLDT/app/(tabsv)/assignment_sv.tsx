@@ -114,7 +114,7 @@ const AssignmentApp = () => {
         <Text style={styles.dateHeader}>{date}</Text>
        
           {groupedAssignments[date].map((assignment) => (
-             <TouchableOpacity style={styles.card} onPress={()=> router.push({
+             <TouchableOpacity key={assignment.id} style={styles.card} onPress={()=> router.push({
               pathname: '/submission',
               params: assignment,
              })}>

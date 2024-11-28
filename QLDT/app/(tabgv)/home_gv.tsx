@@ -49,10 +49,7 @@ const Home = () => {
           token,
           role,
           account_id: accountId,
-          pageable_request: {
-            page: "0",
-            page_size: "5",
-          },
+          pageable_request: null,
         }
       );
 

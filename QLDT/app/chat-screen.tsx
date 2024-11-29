@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Image, SafeAreaView } from 'react-native';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useAuth } from "@/Context/AuthProvider";
@@ -79,15 +79,23 @@ const ChatScreen = () => {
         const receivedMessage = JSON.parse(message.body);
         console.log('Received message from inbox:', receivedMessage);
         
-        setMessages((prev) => {
-          if (!prev.some(msg => msg.id === receivedMessage.id)) {
-            const allMessages = [...prev, receivedMessage];
-            return allMessages.sort((a, b) => 
-              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            );
-          }
-          return prev;
-        });
+        if (receivedMessage.conversation_id === Number(conversationId)) {
+          setMessages((prev) => {
+            if (!prev.some(msg => msg.id === receivedMessage.id)) {
+              const allMessages = [...prev, {
+                id: receivedMessage.id,
+                content: receivedMessage.content,
+                sender: receivedMessage.sender,
+                created_at: receivedMessage.created_at,
+                unread: receivedMessage.unread
+              }];
+              return allMessages.sort((a, b) => 
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              );
+            }
+            return prev;
+          });
+        }
       });
       
       fetchConversations();
@@ -247,19 +255,25 @@ const ChatScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="white" />
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
+
         <Image 
-          source={{ uri: convertGoogleDriveLink(partner.avatar) }}
-          style={styles.headerAvatar}
-          defaultSource={require('../assets/images/user.png')}
+          source={
+            partner.avatar 
+              ? { uri: convertGoogleDriveLink(partner.avatar) }
+              : require('../assets/images/user.png')
+          }
+          style={styles.avatar}
         />
-        <View style={styles.headerTitle}>
-          <Text style={styles.headerText}>{partner.name}</Text>
-        </View>
+
+        <Text style={styles.userName}>{partner.name}</Text>
       </View>
 
       <FlatList
@@ -321,33 +335,38 @@ const ChatScreen = () => {
           <Ionicons name="send" size={24} color="red" />
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
   },
   header: {
+    backgroundColor: '#DC2626',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'red',
-    padding: 10,
-    paddingTop: 40,
+    padding: 16,
   },
   backButton: {
-    padding: 5,
+    marginRight: 12,
   },
-  headerTitle: {
-    flex: 1,
-    marginLeft: 10,
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 12,
   },
-  headerText: {
-    color: 'white',
+  userName: {
+    color: '#fff',
     fontSize: 18,
     fontWeight: '500',
+  },
+  chatContainer: {
+    flex: 1,
+    padding: 16,
   },
   messagesList: {
     flex: 1,
@@ -374,7 +393,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sent: {
-    backgroundColor: 'red',
+    backgroundColor: '#DC2626',
     color: 'white',
     borderTopRightRadius: 4,
   },
@@ -424,15 +443,6 @@ const styles = StyleSheet.create({
   receivedTime: {
     textAlign: 'left',
     marginLeft: 4,
-  },
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginLeft: 10,
-    backgroundColor: '#f0f0f0',
-    borderWidth: 2,
-    borderColor: 'white',
   },
 });
 

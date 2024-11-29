@@ -169,7 +169,7 @@ export default function ListChat() {
         />
       )}
 
-      <TouchableOpacity style={styles.fab}>
+      <TouchableOpacity style={styles.fab} onPress={() => router.push('/new-chat')}>
         <Icon name="edit" size={24} color="white" />
       </TouchableOpacity>
     </SafeAreaView>

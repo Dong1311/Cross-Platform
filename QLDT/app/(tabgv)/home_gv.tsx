@@ -179,10 +179,6 @@ const Home = () => {
           <Icon name="group" size={24} color="purple" />
           <Text style={[styles.tabBarLabel, { color: "purple" }]}>Nhóm</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}>
-          <Icon name="assignment" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Bài tập</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info-gv')}>
           <Icon name="person" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Cá nhân</Text>

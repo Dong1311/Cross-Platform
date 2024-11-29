@@ -4,6 +4,32 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useAuth } from "@/Context/AuthProvider";
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+
+interface Sender {
+  id: number;
+  name: string;
+  avatar: string;
+}
+
+interface Message {
+  message_id: string;
+  message: string;
+  sender: Sender;
+  created_at: string;
+  unread: number;
+}
+
+interface ApiResponse {
+  data: {
+    conversation: Message[];
+    is_blocked: string;
+  };
+  meta: {
+    code: string;
+    message: string;
+  };
+}
 
 const ChatScreen = () => {
   const [messages, setMessages] = useState([]);
@@ -118,12 +144,41 @@ const ChatScreen = () => {
 
   const fetchConversations = async () => {
     try {
-      // Thêm logic để fetch conversations từ API của bạn
-      // const response = await fetch('your_api_endpoint');
-      // const data = await response.json();
-      // setConversations(data);
+      const response = await axios.post<ApiResponse>('http://157.66.24.126:8080/it5023e/get_conversation', {
+        token: token,
+        index: "0",
+        count: "20",
+        conversation_id: "5575",
+        mark_as_read: "true"
+      });
+
+      if (response.data.meta?.code === "1000") {
+        setMessages(prevMessages => {
+          const newMessages = response.data.data.conversation
+            .reverse()
+            .map(msg => ({
+              id: msg.message_id,
+              content: msg.message,
+              sender: msg.sender,
+              created_at: msg.created_at,
+              unread: msg.unread
+            }));
+          
+          const uniqueMessages = newMessages.filter(
+            newMsg => !prevMessages.some(prevMsg => prevMsg.id === newMsg.id)
+          );
+          
+          return [...uniqueMessages, ...prevMessages];
+        });
+      } else {
+        console.error('Lỗi khi lấy tin nhắn:', response.data.meta.message);
+      }
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Lỗi Axios:', error.response?.data || error.message);
+      } else {
+        console.error('Lỗi không xác định:', error);
+      }
     }
   };
 

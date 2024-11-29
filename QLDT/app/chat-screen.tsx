@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useAuth } from "@/Context/AuthProvider";
@@ -38,6 +38,9 @@ const ChatScreen = () => {
   const [isConnected, setIsConnected] = useState(false);
   const clientRef = useRef<Client | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
 
   const { token, accountId, email } = useAuth() as AuthContextType;
 
@@ -72,7 +75,10 @@ const ChatScreen = () => {
         
         setMessages((prev) => {
           if (!prev.some(msg => msg.id === receivedMessage.id)) {
-            return [...prev, receivedMessage];
+            const allMessages = [...prev, receivedMessage];
+            return allMessages.sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
           }
           return prev;
         });
@@ -142,36 +148,60 @@ const ChatScreen = () => {
     }
   };
 
-  const fetchConversations = async () => {
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMoreMessages) {
+      fetchConversations(currentPage + 1);
+    }
+  };
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offset = event.nativeEvent.contentOffset.y;
+    if (offset < 50) {
+      handleLoadMore();
+    }
+  };
+
+  const fetchConversations = async (page = 0) => {
+    if (isLoadingMore || !hasMoreMessages) return;
+    
+    setIsLoadingMore(true);
     try {
       const response = await axios.post<ApiResponse>('http://157.66.24.126:8080/it5023e/get_conversation', {
         token: token,
-        index: "0",
+        index: page.toString(),
         count: "20",
         conversation_id: "5575",
         mark_as_read: "true"
       });
 
       if (response.data.meta?.code === "1000") {
+        const newMessages = response.data.data.conversation;
+        
+        if (newMessages.length < 5) {
+          setHasMoreMessages(false);
+        }
+
         setMessages(prevMessages => {
-          const newMessages = response.data.data.conversation
-            .reverse()
-            .map(msg => ({
-              id: msg.message_id,
-              content: msg.message,
-              sender: msg.sender,
-              created_at: msg.created_at,
-              unread: msg.unread
-            }));
+          const mappedMessages = newMessages.map(msg => ({
+            id: msg.message_id,
+            content: msg.message,
+            sender: msg.sender,
+            created_at: msg.created_at,
+            unread: msg.unread
+          }));
           
-          const uniqueMessages = newMessages.filter(
+          const uniqueMessages = mappedMessages.filter(
             newMsg => !prevMessages.some(prevMsg => prevMsg.id === newMsg.id)
           );
           
-          return [...uniqueMessages, ...prevMessages];
+          const allMessages = [...prevMessages, ...uniqueMessages];
+          
+          return allMessages.sort((a, b) => 
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
         });
-      } else {
-        console.error('Lỗi khi lấy tin nhắn:', response.data.meta.message);
+
+        setCurrentPage(page);
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -179,18 +209,10 @@ const ChatScreen = () => {
       } else {
         console.error('Lỗi không xác định:', error);
       }
+    } finally {
+      setIsLoadingMore(false);
     }
   };
-
-  const scrollToBottom = () => {
-    if (flatListRef.current && messages.length > 0) {
-      flatListRef.current.scrollToEnd({ animated: true });
-    }
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   return (
     <View style={styles.container}>
@@ -208,6 +230,7 @@ const ChatScreen = () => {
         style={styles.messagesList}
         contentContainerStyle={styles.messagesContent}
         data={messages}
+        inverted={false}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={[
@@ -216,14 +239,25 @@ const ChatScreen = () => {
           ]}>
             <Text style={[
               styles.messageText,
-              item.sender.id === Number(accountId)  ? styles.sent : styles.received
+              item.sender.id === Number(accountId) ? styles.sent : styles.received
             ]}>
               {item.content}
             </Text>
           </View>
         )}
-        onContentSizeChange={scrollToBottom}
-        onLayout={scrollToBottom}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        ListHeaderComponent={() => (
+          isLoadingMore ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="red" />
+            </View>
+          ) : null
+        )}
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: 10
+        }}
       />
 
       <View style={styles.inputContainer}>
@@ -330,6 +364,10 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     padding: 8,
+  },
+  loadingContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
   },
 });
 

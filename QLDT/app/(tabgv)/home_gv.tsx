@@ -171,7 +171,7 @@ const Home = () => {
           <Text style={styles.tabBarLabel}>Hoạt động</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarButton}
-          onPress={()=>router.push('/chat-screen')}>
+          onPress={()=>router.push('/list-chat')}>
           <Icon name="chat" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Trò chuyện</Text>
         </TouchableOpacity>

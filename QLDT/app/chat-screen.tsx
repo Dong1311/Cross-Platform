@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useAuth } from "@/Context/AuthProvider";
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { router, useLocalSearchParams } from 'expo-router';
 
 interface Sender {
   id: number;
@@ -32,8 +33,12 @@ interface ApiResponse {
 }
 
 const ChatScreen = () => {
+  const params = useLocalSearchParams();
   const [messages, setMessages] = useState([]);
-  const [receiverId, setReceiverId] = useState('37');
+  const [partner, setPartner] = useState(
+    JSON.parse(decodeURIComponent(params.partner_data as string))
+  );
+  const [conversationId, setConversationId] = useState(params.conversation_id?.toString() || '');
   const [content, setContent] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const clientRef = useRef<Client | null>(null);
@@ -41,6 +46,7 @@ const ChatScreen = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
+
 
   const { token, accountId, email } = useAuth() as AuthContextType;
 
@@ -126,7 +132,7 @@ const ChatScreen = () => {
 
     const message = {
       sender: email,
-      receiver: { id: receiverId },
+      receiver: { id: partner.id },
       content,
       token,
     };
@@ -170,7 +176,7 @@ const ChatScreen = () => {
         token: token,
         index: page.toString(),
         count: "20",
-        conversation_id: "5575",
+        conversation_id: conversationId,
         mark_as_read: "true"
       });
 
@@ -214,14 +220,45 @@ const ChatScreen = () => {
     }
   };
 
+  // Thêm hàm để format thời gian
+  const formatMessageTime = (dateString: string) => {
+    const date = new Date(dateString);
+    // Chuyển đổi sang múi giờ Việt Nam (UTC+7)
+    const vietnamTime = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+    
+    return vietnamTime.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false // Sử dụng định dạng 24 giờ
+    });
+  };
+
+  // Thêm hàm convertGoogleDriveLink từ list-chat.tsx
+  const convertGoogleDriveLink = (url: string): string => {
+    if (!url) return 'https://via.placeholder.com/50';
+    if (url.includes('drive.google.com')) {
+      const match = url.match(/[-\w]{25,}/);
+      if (match) {
+        const fileId = match[0];
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+      }
+    }
+    return url;
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color="white" />
         </TouchableOpacity>
+        <Image 
+          source={{ uri: convertGoogleDriveLink(partner.avatar) }}
+          style={styles.headerAvatar}
+          defaultSource={require('../assets/images/user.png')}
+        />
         <View style={styles.headerTitle}>
-          <Text style={styles.headerText}>Họ Và Tên 20218286</Text>
+          <Text style={styles.headerText}>{partner.name}</Text>
         </View>
       </View>
 
@@ -242,6 +279,12 @@ const ChatScreen = () => {
               item.sender.id === Number(accountId) ? styles.sent : styles.received
             ]}>
               {item.content}
+            </Text>
+            <Text style={[
+              styles.timeText,
+              item.sender.id === Number(accountId) ? styles.sentTime : styles.receivedTime
+            ]}>
+              {formatMessageTime(item.created_at)}
             </Text>
           </View>
         )}
@@ -368,6 +411,28 @@ const styles = StyleSheet.create({
   loadingContainer: {
     paddingVertical: 20,
     alignItems: 'center',
+  },
+  timeText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  sentTime: {
+    textAlign: 'right',
+    marginRight: 4,
+  },
+  receivedTime: {
+    textAlign: 'left',
+    marginLeft: 4,
+  },
+  headerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginLeft: 10,
+    backgroundColor: '#f0f0f0',
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });
 

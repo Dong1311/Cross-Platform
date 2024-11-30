@@ -48,6 +48,11 @@ const ChatScreen = () => {
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const scrollPositionRef = useRef(0);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const MESSAGES_PER_PAGE = 20;
+  const BUFFER_THRESHOLD = 10;
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const { token, accountId, email } = useAuth() as AuthContextType;
 
@@ -83,6 +88,9 @@ const ChatScreen = () => {
         if (receivedMessage.conversation_id === Number(conversationId)) {
           setMessages((prev) => {
             if (!prev.some(msg => msg.id === receivedMessage.id)) {
+              if (!shouldAutoScroll) {
+                setUnreadCount(count => count + 1);
+              }
               const allMessages = [...prev, {
                 id: receivedMessage.id,
                 content: receivedMessage.content,
@@ -184,9 +192,22 @@ const ChatScreen = () => {
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offset = event.nativeEvent.contentOffset.y;
-    if (offset < 50) {
+    const visibleLength = event.nativeEvent.layoutMeasurement.height;
+    const contentLength = event.nativeEvent.contentSize.height;
+    
+    const distanceFromBottom = contentLength - visibleLength - offset;
+    setShowScrollButton(distanceFromBottom > 100);
+    
+    if (offset < BUFFER_THRESHOLD * 50) {
       handleLoadMore();
     }
+  };
+
+  const scrollToBottom = () => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+    setShowScrollButton(false);
+    setUnreadCount(0);
+    setShouldAutoScroll(true);
   };
 
   const fetchConversations = async (page = 0) => {
@@ -197,7 +218,7 @@ const ChatScreen = () => {
       const response = await axios.post<ApiResponse>('http://157.66.24.126:8080/it5023e/get_conversation', {
         token: token,
         index: page.toString(),
-        count: "20",
+        count: MESSAGES_PER_PAGE.toString(),
         conversation_id: conversationId,
         mark_as_read: "true"
       });
@@ -205,7 +226,7 @@ const ChatScreen = () => {
       if (response.data.meta?.code === "1000") {
         const newMessages = response.data.data.conversation;
         
-        if (newMessages.length < 5) {
+        if (newMessages.length < MESSAGES_PER_PAGE) {
           setHasMoreMessages(false);
         }
 
@@ -239,6 +260,7 @@ const ChatScreen = () => {
       }
     } finally {
       setIsLoadingMore(false);
+      setIsLoadingInitial(false);
     }
   };
 
@@ -331,17 +353,13 @@ const ChatScreen = () => {
             </Text>
           </View>
         )}
-        onScroll={(event) => {
-          scrollPositionRef.current = event.nativeEvent.contentOffset.y;
-          handleScroll(event);
-        }}
+        onScroll={handleScroll}
         onScrollEndDrag={handleScrollEndDrag}
-        onContentSizeChange={() => {
-          if (shouldAutoScroll) {
-            flatListRef.current?.scrollToEnd({ animated: true });
-          }
-        }}
-        scrollEventThrottle={16}
+        onEndReachedThreshold={0.5}
+        maxToRenderPerBatch={10}
+        windowSize={21}
+        removeClippedSubviews={true}
+        updateCellsBatchingPeriod={50}
         ListHeaderComponent={() => (
           isLoadingMore ? (
             <View style={styles.loadingContainer}>
@@ -349,11 +367,34 @@ const ChatScreen = () => {
             </View>
           ) : null
         )}
+        ListEmptyComponent={() => (
+          isLoadingInitial ? (
+            <View style={[styles.loadingContainer, { flex: 1, justifyContent: 'center' }]}>
+              <ActivityIndicator size="large" color="red" />
+            </View>
+          ) : null
+        )}
         maintainVisibleContentPosition={{
           minIndexForVisible: 0,
-          autoscrollToTopThreshold: 10
+          autoscrollToTopThreshold: BUFFER_THRESHOLD
         }}
       />
+
+      {showScrollButton && (
+        <TouchableOpacity 
+          style={styles.scrollButton} 
+          onPress={scrollToBottom}
+        >
+          <View style={styles.scrollButtonInner}>
+            <Ionicons name="arrow-down" size={24} color="white" />
+            {unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadText}>{unreadCount}</Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.addButton}>
@@ -481,6 +522,46 @@ const styles = StyleSheet.create({
   receivedTime: {
     textAlign: 'left',
     marginLeft: 4,
+  },
+  scrollButton: {
+    position: 'absolute',
+    left: '50%',
+    transform: [{ translateX: -20 }],
+    bottom: 80,
+    zIndex: 1000,
+  },
+  scrollButtonInner: {
+    width: 50 ,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#DC2626',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#1d4ed8',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  unreadText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 

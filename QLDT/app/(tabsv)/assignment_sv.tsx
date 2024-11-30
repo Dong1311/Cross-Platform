@@ -32,7 +32,6 @@ interface AssignmentsData {
   overdue: Assignment[];
   completed: Assignment[];
 }
-const API_URL = "https://670fad74a85f4164ef2b6e89.mockapi.io/ehust/assignments";
 const AssignmentApp = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("upcoming");

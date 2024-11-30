@@ -197,7 +197,7 @@ export default function App() {
 
   const renderItem = ({ item }: { item: Documents }) => (
     <TouchableOpacity
-      onPress={() => handleOpenFile(item.id)}
+      onPress={() => handleOpenFile(item.id.toString())}
       style={styles.itemContainer}
     >
       <Ionicons name="document" size={24} color="blue" />

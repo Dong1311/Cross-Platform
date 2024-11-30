@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useAuth } from "@/Context/AuthProvider";
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 
 interface Partner {
@@ -96,9 +96,9 @@ export default function ListChat() {
     }
   };
 
-  useEffect(() => {
+  useFocusEffect(() => {
     fetchConversations();
-  }, []);
+  });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

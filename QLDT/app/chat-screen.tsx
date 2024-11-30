@@ -46,7 +46,8 @@ const ChatScreen = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
-
+  const scrollPositionRef = useRef(0);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   const { token, accountId, email } = useAuth() as AuthContextType;
 
@@ -126,6 +127,14 @@ const ChatScreen = () => {
     };
   }, [accountId, token]);
 
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: false });
+      }, 100);
+    }
+  }, [messages.length === 0]);
+
   const sendMessage = async () => {
     if (!clientRef.current || !isConnected) {
       console.error('STOMP client is not connected');
@@ -157,6 +166,11 @@ const ChatScreen = () => {
       });
       
       setContent('');
+      if (shouldAutoScroll) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -254,6 +268,15 @@ const ChatScreen = () => {
     return url;
   };
 
+  const handleScrollEndDrag = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentOffset = event.nativeEvent.contentOffset.y;
+    const contentHeight = event.nativeEvent.contentSize.height;
+    const scrollViewHeight = event.nativeEvent.layoutMeasurement.height;
+    
+    const isCloseToBottom = contentHeight - currentOffset - scrollViewHeight < 20;
+    setShouldAutoScroll(isCloseToBottom);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -283,6 +306,12 @@ const ChatScreen = () => {
         data={messages}
         inverted={false}
         keyExtractor={(item) => item.id}
+        initialScrollIndex={messages.length - 1}
+        onScrollToIndexFailed={() => {
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: false });
+          }, 100);
+        }}
         renderItem={({ item }) => (
           <View style={[
             styles.messageContainer,
@@ -302,7 +331,16 @@ const ChatScreen = () => {
             </Text>
           </View>
         )}
-        onScroll={handleScroll}
+        onScroll={(event) => {
+          scrollPositionRef.current = event.nativeEvent.contentOffset.y;
+          handleScroll(event);
+        }}
+        onScrollEndDrag={handleScrollEndDrag}
+        onContentSizeChange={() => {
+          if (shouldAutoScroll) {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }
+        }}
         scrollEventThrottle={16}
         ListHeaderComponent={() => (
           isLoadingMore ? (

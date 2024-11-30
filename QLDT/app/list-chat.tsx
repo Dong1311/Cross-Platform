@@ -117,11 +117,10 @@ export default function ListChat() {
       }}
     >
       <Image 
-        source={{ 
-          uri: convertGoogleDriveLink(item.partner.avatar)
-        }} 
+        source={item.partner.avatar 
+          ? { uri: convertGoogleDriveLink(item.partner.avatar) }
+          : require('../assets/images/user.png')} 
         style={styles.avatar}
-        defaultSource={require('../assets/images/user.png')}
         onError={(error) => {
           console.log('Lỗi tải ảnh:', error.nativeEvent.error);
         }}

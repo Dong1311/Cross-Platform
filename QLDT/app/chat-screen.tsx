@@ -48,11 +48,12 @@ const ChatScreen = () => {
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const scrollPositionRef = useRef(0);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(false);
   const MESSAGES_PER_PAGE = 20;
   const BUFFER_THRESHOLD = 10;
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isNewChat, setIsNewChat] = useState(!params.conversation_id);
 
   const { token, accountId, email } = useAuth() as AuthContextType;
 
@@ -85,6 +86,19 @@ const ChatScreen = () => {
         const receivedMessage = JSON.parse(message.body);
         console.log('Received message from inbox:', receivedMessage);
         
+        if (isNewChat && receivedMessage.conversation_id) {
+          setIsNewChat(false);
+          setConversationId(receivedMessage.conversation_id.toString());
+          // setMessages(prev => [...prev, {
+          //   id: receivedMessage.id,
+          //   content: receivedMessage.content,
+          //   sender: receivedMessage.sender,
+          //   created_at: receivedMessage.created_at,
+          //   unread: receivedMessage.unread
+          // }]);
+          return;
+        }
+        
         if (receivedMessage.conversation_id === Number(conversationId)) {
           setMessages((prev) => {
             if (!prev.some(msg => msg.id === receivedMessage.id)) {
@@ -107,7 +121,9 @@ const ChatScreen = () => {
         }
       });
       
-      fetchConversations();
+      if (!isNewChat) {
+        fetchConversations(0);
+      }
     };
 
     newClient.onDisconnect = () => {
@@ -133,7 +149,7 @@ const ChatScreen = () => {
         clientRef.current.deactivate();
       }
     };
-  }, [accountId, token]);
+  }, [accountId, token, conversationId]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -144,6 +160,8 @@ const ChatScreen = () => {
   }, [messages.length === 0]);
 
   const sendMessage = async () => {
+    if (!content.trim()) return;
+    
     if (!clientRef.current || !isConnected) {
       console.error('STOMP client is not connected');
       try {
@@ -172,6 +190,20 @@ const ChatScreen = () => {
           Authorization: `Bearer ${token}`,
         }
       });
+      
+      // if (isNewChat) {
+      //   setMessages(prev => [...prev, {
+      //     id: Date.now().toString(),
+      //     content: content,
+      //     sender: {
+      //       id: Number(accountId),
+      //       name: email,
+      //       avatar: ''
+      //     },
+      //     created_at: new Date().toISOString(),
+      //     unread: 0
+      //   }]);
+      // }
       
       setContent('');
       if (shouldAutoScroll) {
@@ -211,17 +243,26 @@ const ChatScreen = () => {
   };
 
   const fetchConversations = async (page = 0) => {
+    if (!conversationId) return;
+    
     if (isLoadingMore || !hasMoreMessages) return;
     
+    if (page === 0) {
+      setIsLoadingInitial(true);
+    }
     setIsLoadingMore(true);
+
     try {
-      const response = await axios.post<ApiResponse>('http://157.66.24.126:8080/it5023e/get_conversation', {
-        token: token,
-        index: page.toString(),
-        count: MESSAGES_PER_PAGE.toString(),
-        conversation_id: conversationId,
-        mark_as_read: "true"
-      });
+      const response = await axios.post<ApiResponse>(
+        'http://157.66.24.126:8080/it5023e/get_conversation',
+        {
+          token: token,
+          index: page.toString(),
+          count: MESSAGES_PER_PAGE.toString(),
+          conversation_id: conversationId,
+          mark_as_read: "true"
+        }
+      );
 
       if (response.data.meta?.code === "1000") {
         const newMessages = response.data.data.conversation;
@@ -253,11 +294,7 @@ const ChatScreen = () => {
         setCurrentPage(page);
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Lỗi Axios:', error.response?.data || error.message);
-      } else {
-        console.error('Lỗi không xác định:', error);
-      }
+      console.error('Lỗi fetch conversations:', error);
     } finally {
       setIsLoadingMore(false);
       setIsLoadingInitial(false);
@@ -368,11 +405,23 @@ const ChatScreen = () => {
           ) : null
         )}
         ListEmptyComponent={() => (
-          isLoadingInitial ? (
+          isNewChat ? (
+            <View style={[styles.loadingContainer, { flex: 1, justifyContent: 'center' }]}>
+              <Text style={styles.emptyText}>
+                Hãy gửi tin nhắn đầu tiên để bắt đầu cuộc trò chuyện
+              </Text>
+            </View>
+          ) : isLoadingInitial ? (
             <View style={[styles.loadingContainer, { flex: 1, justifyContent: 'center' }]}>
               <ActivityIndicator size="large" color="red" />
             </View>
-          ) : null
+          ) : (
+            <View style={[styles.loadingContainer, { flex: 1, justifyContent: 'center' }]}>
+              <Text style={styles.emptyText}>
+                Chưa có tin nhắn nào
+              </Text>
+            </View>
+          )
         )}
         maintainVisibleContentPosition={{
           minIndexForVisible: 0,
@@ -562,6 +611,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 16,
+    padding: 20,
   },
 });
 

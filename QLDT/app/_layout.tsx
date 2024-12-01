@@ -46,6 +46,8 @@ export default function RootLayout() {
           <Stack.Screen name="user-info" options={{ headerShown: false }} />
           <Stack.Screen name="change-password" options={{ headerShown: false }} />
           <Stack.Screen name="chat-screen" options={{ headerShown: false }} />
+          <Stack.Screen name="list-chat" options={{ headerShown: false }} />
+          <Stack.Screen name="new-chat" options={{ headerShown: false }} />
 
           {/* <Stack.Screen name="(tabgv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabgv)/home_gv" options={{ headerShown: false }} />

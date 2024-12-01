@@ -1,33 +1,19 @@
-// import { initializeApp } from 'firebase/app';
-// import { getFirestore, Firestore } from 'firebase/firestore';
-// import { getAuth, initializeAuth, getReactNativePersistence, Auth } from 'firebase/auth';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
-// // Cấu hình Firebase
-// const firebaseConfig = {
-//   apiKey: "AIzaSyCbhTpA6_dSyUnHPje39GF9wYycJz7i5o8",
-//   authDomain: "react-navtive-qldt.firebaseapp.com",
-//   projectId: "react-navtive-qldt",
-//   storageBucket: "react-navtive-qldt.appspot.com",
-//   messagingSenderId: "175085949899",
-//   appId: "1:175085949899:android:d28a5c651fa1a8a2c55c4e"
-// };
+const firebaseConfig = {
+  apiKey: "AIzaSyD_ZD2aFvMCId2fWQ--byva2YQrpt2C1gU",
+  authDomain: "crossplatform-it4788-f38e0.firebaseapp.com",
+  projectId: "crossplatform-it4788-f38e0",
+  storageBucket: "crossplatform-it4788-f38e0.firebasestorage.app",
+  messagingSenderId: "844626516109",
+  appId: "1:844626516109:android:1c122a7d1d7acc8ffd2ac4"
+};
 
-// // Khởi tạo Firebase App
-// const app = initializeApp(firebaseConfig);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
-// // Khởi tạo Firestore với kiểu Firestore
-// const db: Firestore = getFirestore(app);
-
-// // Khởi tạo Auth với kiểu Auth
-// let auth: Auth;
-// try {
-//   auth = getAuth(app); // Nếu đã khởi tạo Firebase Auth
-// } catch (e) {
-//   // Khởi tạo Firebase Auth với AsyncStorage để duy trì trạng thái đăng nhập
-//   auth = initializeAuth(app, {
-//     persistence: getReactNativePersistence(AsyncStorage),
-//   });
-// }
-
-// export { auth, db };
+// Initialize Firestore and Auth
+export const firestore = getFirestore(app);
+export const auth = getAuth(app);

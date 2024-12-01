@@ -16,19 +16,19 @@ import axios from "axios";
 import { useAuth } from "@/Context/AuthProvider";
 
 const CreateClass: React.FC = () => {
-  const { token, role, accountId, classList, classId, setClassList } = useAuth() as AuthContextType;
+  const { token, classList, setClassList } = useAuth() as AuthContextType;
 
   interface AuthContextType {
     token: string;
     role: string;
     accountId: string;
-    classId :string;
-    setClassList: React.Dispatch<React.SetStateAction<ClassItem[]>>;
+    classId: string;
+    setClassList: React.Dispatch<React.SetStateAction<ClassInfo[]>>;
     setClassId: React.Dispatch<React.SetStateAction<string>>;
-    classList: ClassItem[];
+    classList: ClassInfo[] | null;
   }
 
-  interface ClassItem {
+  interface ClassInfo {
     class_id: string;
     class_name: string;
     attached_code: string;
@@ -109,7 +109,7 @@ const CreateClass: React.FC = () => {
       );
       console.log(res.data)
       if(res.data.meta.code === '1000') {
-        setClassList([ res.data.data,...classList])
+        setClassList([res.data.data, ...(classList || [])]);
         Alert.alert("Thành công","Tạo lớp học thành công");
         router.back();
       }
@@ -145,10 +145,8 @@ const CreateClass: React.FC = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerContainer}>
-        <TouchableOpacity style={styles.backButton}>
-          <Link href="/home_gv">
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="white" />
-          </Link>
         </TouchableOpacity>
         <Text style={styles.headerText}>HUST</Text>
         <Text style={styles.subHeaderText}>CREATE CLASS</Text>

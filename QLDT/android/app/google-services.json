@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "175085949899",
-    "project_id": "react-navtive-qldt",
-    "storage_bucket": "react-navtive-qldt.appspot.com"
+    "project_number": "844626516109",
+    "project_id": "crossplatform-it4788-f38e0",
+    "storage_bucket": "crossplatform-it4788-f38e0.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:175085949899:android:d28a5c651fa1a8a2c55c4e",
+        "mobilesdk_app_id": "1:844626516109:android:1c122a7d1d7acc8ffd2ac4",
         "android_client_info": {
-          "package_name": "com.dongvt215349.qldt"
+          "package_name": "com.it4788.crossplatform"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCbhTpA6_dSyUnHPje39GF9wYycJz7i5o8"
+          "current_key": "AIzaSyD_ZD2aFvMCId2fWQ--byva2YQrpt2C1gU"
         }
       ],
       "services": {

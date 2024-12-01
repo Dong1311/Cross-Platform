@@ -49,10 +49,7 @@ const Home = () => {
           token,
           role,
           account_id: accountId,
-          pageable_request: {
-            page: "0",
-            page_size: "5",
-          },
+          pageable_request: null,
         }
       );
 
@@ -174,17 +171,13 @@ const Home = () => {
           <Text style={styles.tabBarLabel}>Hoạt động</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarButton}
-          onPress={()=>router.push('/chat-screen')}>
+          onPress={()=>router.push('/list-chat')}>
           <Icon name="chat" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Trò chuyện</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarButton}>
           <Icon name="group" size={24} color="purple" />
           <Text style={[styles.tabBarLabel, { color: "purple" }]}>Nhóm</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}>
-          <Icon name="assignment" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Bài tập</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info-gv')}>
           <Icon name="person" size={24} color="black" />

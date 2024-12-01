@@ -31,7 +31,7 @@ const Home = () => {
   const [unreadCount, setUnreadCount] = useState(0); // Trạng thái lưu trữ số thông báo chưa đọc
   const router = useRouter();
   const { token, role, accountId } = useAuth() as AuthContextType;
-
+  console.log(unreadCount)
   interface AuthContextType {
     token: string;
     role: string;
@@ -81,6 +81,7 @@ const Home = () => {
         { token }
       );
       if (response.data.meta.code === "1000") {
+        console.log(response.data.data);
         setUnreadCount(response.data.data); // Cập nhật số thông báo chưa đọc
       } else {
         console.error("Failed to fetch unread notifications", response.data.meta);

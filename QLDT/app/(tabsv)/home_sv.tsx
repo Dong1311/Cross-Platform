@@ -8,10 +8,10 @@ import {
   StyleSheet,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import Icons from "@expo/vector-icons/MaterialCommunityIcons";
 import axios from "axios";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useAuth } from "@/Context/AuthProvider";
+import { Link } from "expo-router";
 
 interface ClassItem {
   class_id: string;
@@ -28,6 +28,7 @@ interface ClassItem {
 const Home = () => {
   const [search, setSearch] = useState("");
   const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0); // Trạng thái lưu trữ số thông báo chưa đọc
   const router = useRouter();
   const { token, role, accountId } = useAuth() as AuthContextType;
 
@@ -39,7 +40,10 @@ const Home = () => {
 
   useEffect(() => {
     fetchClassList();
+    fetchUnreadNotifications(); // Gọi API để lấy số thông báo chưa đọc
   }, []);
+
+  
 
   const handleClassPress = (classId: string) => {
     router.push({ pathname: "/class_detail-sv", params: { classId } });
@@ -59,18 +63,30 @@ const Home = () => {
           },
         }
       );
-      console.log(response.data);
       if (response.data.meta.code === "1000") {
         setClasses(response.data.data.page_content);
       } else {
         console.error("Failed to fetch classes: Code not 1000", response.data.meta);
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("Axios error:", error.response?.data || error.message);
+      console.error("Error fetching class list:", error);
+    }
+  };
+
+  // Hàm gọi API để lấy số lượng thông báo chưa đọc
+  const fetchUnreadNotifications = async () => {
+    try {
+      const response = await axios.post(
+        "http://157.66.24.126:8080/it5023e/get_unread_notification_count",
+        { token }
+      );
+      if (response.data.meta.code === "1000") {
+        setUnreadCount(response.data.data); // Cập nhật số thông báo chưa đọc
       } else {
-        console.error("Unexpected error:", error);
+        console.error("Failed to fetch unread notifications", response.data.meta);
       }
+    } catch (error) {
+      console.error("Error fetching unread notifications:", error);
     }
   };
 
@@ -137,9 +153,18 @@ const Home = () => {
           style={styles.tabBarButton}
           onPress={() => router.push("/(tabsv)/notifications_screen")}
         >
-          <Icon name="notifications" size={24} color="black" />
+          <View style={styles.notificationContainer}>
+            <Icon name="notifications" size={24} color="black" />
+            {unreadCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>{unreadCount}</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.tabBarLabel}>Hoạt động</Text>
         </TouchableOpacity>
+
+        {/* Các tab khác */}
         <TouchableOpacity
           style={styles.tabBarButton}
           onPress={() => router.push("/chat-screen")}
@@ -158,7 +183,7 @@ const Home = () => {
           <Icon name="assignment" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Bài tập</Text>
         </TouchableOpacity>
-    
+
         <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info')}>
           <Icon name="person" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Cá nhân</Text>
@@ -276,13 +301,32 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
   },
+  notificationContainer: {
+    position: "relative",
+    alignItems: "center",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "red",
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notificationText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
   emptyMessage: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 16,
     marginVertical: 10,
-    color: 'gray',
+    color: "gray",
   },
-  
 });
 
 export default Home;

@@ -49,6 +49,7 @@ export default function RootLayout() {
           <Stack.Screen name="list-chat" options={{ headerShown: false }} />
           <Stack.Screen name="new-chat" options={{ headerShown: false }} />
 
+
           {/* <Stack.Screen name="(tabgv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabgv)/home_gv" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/edit_class" options={{ headerShown: false }} />
@@ -74,6 +75,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabsv)/notifications_screen" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/absence-request" options={{ headerShown: false }} />
           <Stack.Screen name="(tabsv)/class_detail-sv" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabsv)/assignment_class" options={{ headerShown: false }} />
         </Stack>
       </AuthProvider>
     </ThemeProvider>

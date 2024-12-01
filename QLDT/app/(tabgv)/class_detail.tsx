@@ -14,7 +14,6 @@ const ClassDetail = () => {
   const { setClassId, classList } = useAuth() as AuthContextType;
   const { token } = useAuth();
 
-  // State for searching students
   const [searchText, setSearchText] = useState('');
   const [students, setStudents] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -53,16 +52,15 @@ const ClassDetail = () => {
     }
   }, [params.class_id, classList]);
 
-  // useEffect to trigger search when searchText changes
   useEffect(() => {
     if (searchText.trim() !== '') {
       const delayDebounceFn = setTimeout(() => {
         handleSearch();
-      }, 500); // Delay for 500ms to avoid too many requests on every keystroke
+      }, 500); 
 
-      return () => clearTimeout(delayDebounceFn); // Cleanup on change
+      return () => clearTimeout(delayDebounceFn); 
     } else {
-      setStudents([]); // Clear the list when searchText is empty
+      setStudents([]); 
     }
   }, [searchText]);
 
@@ -82,24 +80,40 @@ const ClassDetail = () => {
   };
 
   const handleAddStudent = async (studentId: string) => {
-    try {
-      const response = await axios.post('http://157.66.24.126:8080/it5023e/add_student', {
-        token: token, // Replace this with dynamic token
-        class_id: infoClass.class_id,
-        account_id: studentId,
-      });
-
-      if (response.data.meta.code === '1000') {
-        Alert.alert('Success', `Student with ID ${studentId} added successfully!`);
-        setIsModalVisible(false); // Close modal after adding
-      } else {
-        Alert.alert('Error', 'Failed to add student.');
-      }
-    } catch (error) {
-      console.error('Error adding student:', error);
-      Alert.alert('Error', 'An error occurred while adding the student.');
-    }
+    Alert.alert(
+      'Xác nhận',
+      `Bạn có chắc muốn thêm sinh viên với ID ${studentId}?`,
+      [
+        {
+          text: 'Hủy',
+          style: 'cancel',
+        },
+        {
+          text: 'Đồng ý',
+          onPress: async () => {
+            try {
+              const response = await axios.post('http://157.66.24.126:8080/it5023e/add_student', {
+                token: token, 
+                class_id: infoClass.class_id,
+                account_id: studentId, 
+              });
+              if (response.data.meta.code === '1000') {
+                Alert.alert('Thành công', `Sinh viên với ID ${studentId} đã được thêm thành công!`);
+                setIsModalVisible(false); 
+              } else {
+                Alert.alert('Lỗi', 'Thêm sinh viên thất bại.');
+              }
+            } catch (error) {
+              console.error('Lỗi khi thêm sinh viên:', error.response ? error.response.data : error);
+              Alert.alert('Lỗi', `Đã xảy ra lỗi khi thêm sinh viên. Chi tiết: ${error.response ? error.response.data : error.message}`);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
+  
 
   return (
     <>
@@ -110,11 +124,6 @@ const ClassDetail = () => {
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.navTitle}>{infoClass.class_name}</Text>
-          <TouchableOpacity
-            onPress={() => setIsModalVisible(true)}
-            style={[styles.addButton, { position: 'absolute', top: 20, right: 20 }]}>
-            <Ionicons name="add" size={24} color="white" />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.body}>
@@ -130,24 +139,31 @@ const ClassDetail = () => {
           <SafeAreaView style={{ flex: 1, padding: 20 }}>
             <TextInput
               style={styles.searchInput}
-              placeholder="Search for students"
+              placeholder="Tìm kiếm sinh viên"
               value={searchText}
-              onChangeText={setSearchText} // Update searchText on input change
+              onChangeText={setSearchText}
             />
             <FlatList
               data={students}
-              keyExtractor={(item) => item.account_id}
+              keyExtractor={(item) => item.account_id.toString()}  
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.studentItem} onPress={() => handleAddStudent(item.account_id)}>
                   <Text>{item.first_name} {item.last_name}</Text>
                 </TouchableOpacity>
               )}
             />
+
             <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
-              <Text style={{ color: 'white' }}>Close</Text>
+              <Text style={{ color: 'white' }}>Đóng</Text>
             </TouchableOpacity>
           </SafeAreaView>
         </Modal>
+
+        <TouchableOpacity 
+          style={styles.addStudentButton} 
+          onPress={() => setIsModalVisible(true)}>
+          <Text style={styles.addStudentButtonText}>Thêm sinh viên</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     </>
   );
@@ -166,7 +182,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     backgroundColor: "#d32f2f",
-    position: 'relative', // Ensure position of add button
+    position: 'relative', 
   },
   navTitle: {
     fontSize: 18,
@@ -179,9 +195,6 @@ const styles = StyleSheet.create({
     gap: 10,
     justifyContent: 'flex-start',
     flexWrap: 'wrap',
-  },
-  addButton: {
-    zIndex: 999, // Ensure button appears on top
   },
   searchInput: {
     padding: 10,
@@ -201,5 +214,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
     borderRadius: 5,
+  },
+  addStudentButton: {
+    backgroundColor: '#d32f2f',
+    paddingVertical: 15,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+    borderRadius: 5,
+    marginTop: 20,
+  },
+  addStudentButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

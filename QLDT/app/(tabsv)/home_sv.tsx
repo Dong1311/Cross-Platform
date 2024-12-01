@@ -43,7 +43,6 @@ const Home = () => {
     fetchUnreadNotifications(); // Gọi API để lấy số thông báo chưa đọc
   }, []);
 
-  
 
   const handleClassPress = (classId: string) => {
     router.push({ pathname: "/class_detail-sv", params: { classId } });

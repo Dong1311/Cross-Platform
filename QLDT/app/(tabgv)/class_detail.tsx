@@ -124,6 +124,9 @@ const ClassDetail = () => {
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.navTitle}>{infoClass.class_name}</Text>
+          <TouchableOpacity onPress={() => router.push({pathname:'/(tabgv)/edit_class', params: infoClass })}>
+          <Ionicons  name='create-outline' size={26} color="#fff" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.body}>

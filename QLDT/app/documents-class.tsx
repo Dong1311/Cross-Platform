@@ -212,7 +212,7 @@ export default function App() {
   );
 
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#d32f2f" barStyle="light-content" />
       <SafeAreaView style={styles.container}>
         <View style={styles.navBar}>
@@ -290,15 +290,19 @@ export default function App() {
           </TouchableWithoutFeedback>
         </Modal>
       </SafeAreaView>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#d32f2f",
   },
+  // container: {
+  //   flex: 1,
+  //   backgroundColor: "#fff",
+  // },
   navBar: {
     flexDirection: "row",
     alignItems: "center",

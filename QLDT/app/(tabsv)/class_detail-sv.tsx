@@ -268,17 +268,19 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    backgroundColor: "#007bff",
+    backgroundColor:'#d32f2f',
     padding: 12,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
     marginHorizontal: 8,
+    
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+    
   },
 });
 

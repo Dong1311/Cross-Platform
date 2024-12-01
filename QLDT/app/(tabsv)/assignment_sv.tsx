@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import Icons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -35,14 +36,14 @@ interface AssignmentsData {
 const formatDate = (dateString: string | Date): string => {
   const date = new Date(dateString);
   const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0"); 
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 };
 const AssignmentApp = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("upcoming");
-  const {token} = useAuth()
+  const { token } = useAuth();
 
   const [assignmentsData, setAssignmentsData] = useState<AssignmentsData>({
     upcoming: [],
@@ -59,7 +60,10 @@ const AssignmentApp = () => {
   // Hàm fetch API và phân loại dữ liệu
   const fetchAssignments = async () => {
     try {
-      const response = await axios.post('http://157.66.24.126:8080/it5023e/get_student_assignments', {token});
+      const response = await axios.post(
+        "http://157.66.24.126:8080/it5023e/get_student_assignments",
+        { token }
+      );
 
       const now = getDateWithoutTime(new Date()); // Ngày hiện tại không có giờ, phút, giây
 
@@ -69,8 +73,10 @@ const AssignmentApp = () => {
       const tempCompleted: Assignment[] = [];
 
       // Phân loại bài tập
-      response.data.data.forEach((assignment : any) => {
-        const assignmentDate = getDateWithoutTime(new Date(assignment.deadline)); // Chuyển date từ API
+      response.data.data.forEach((assignment: any) => {
+        const assignmentDate = getDateWithoutTime(
+          new Date(assignment.deadline)
+        ); // Chuyển date từ API
 
         if (assignment.is_submitted) {
           tempCompleted.push(assignment);
@@ -87,7 +93,6 @@ const AssignmentApp = () => {
         overdue: tempOverdue,
         completed: tempCompleted,
       });
-
     } catch (error) {
       console.error("Lỗi khi fetch dữ liệu:", error);
     }
@@ -103,13 +108,12 @@ const AssignmentApp = () => {
       return <Text style={styles.noAssignments}>Không có bài tập nào</Text>;
     }
 
-
     // Nhóm bài tập theo ngày
     const groupedAssignments: { [key: string]: Assignment[] } = {};
     assignments.forEach((assignment) => {
       const assignmentDate = new Date(assignment.deadline); // Chuyển đổi thành đối tượng Date
       // const dateString = assignmentDate.toLocaleDateString(); // Gọi toLocaleDateString() sau khi chuyển đổi
-      const dateString = formatDate(assignmentDate)
+      const dateString = formatDate(assignmentDate);
       if (!groupedAssignments[dateString]) {
         groupedAssignments[dateString] = [];
       }
@@ -119,113 +123,141 @@ const AssignmentApp = () => {
     return Object.keys(groupedAssignments).map((date) => (
       <View key={date}>
         <Text style={styles.dateHeader}>{date}</Text>
-       
-          {groupedAssignments[date].map((assignment) => (
-             <TouchableOpacity style={styles.card} onPress={()=> router.push({
-              pathname: '/submission',
-              params: assignment,
-             })}>
-             <View style={styles.iconContainer}>
-               <Text style={styles.iconText}>{new Date(assignment.deadline).getDate()}</Text>
-             </View>
-             <View style={styles.textContainer}>
-               <Text style={styles.title}>{assignment.title}</Text>
-               <Text style={styles.subText}>{`Đến hạn lúc ${new Date(assignment.deadline).toLocaleTimeString().slice(0, 5)}`}</Text>
-               <Text style={styles.subText}>{`Lớp ${assignment.class_id}`}</Text>
-             </View>
-           </TouchableOpacity>
-          ))}
+
+        {groupedAssignments[date].map((assignment) => (
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() =>
+              router.push({
+                pathname: "/submission",
+                params: assignment,
+              })
+            }
+          >
+            <View style={styles.iconContainer}>
+              <Text style={styles.iconText}>
+                {new Date(assignment.deadline).getDate()}
+              </Text>
+            </View>
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>{assignment.title}</Text>
+              <Text style={styles.subText}>{`Đến hạn lúc ${new Date(
+                assignment.deadline
+              )
+                .toLocaleTimeString()
+                .slice(0, 5)}`}</Text>
+              <Text style={styles.subText}>{`Lớp ${assignment.class_id}`}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
       </View>
     ));
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title2}>Bài tập</Text>
-        {/* Tabs */}
-        <View style={styles.tabs}>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "upcoming" ? styles.activeTab : {},
-            ]}
-            onPress={() => setActiveTab("upcoming")}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title2}>Bài tập</Text>
+          {/* Tabs */}
+          <View style={styles.tabs}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "upcoming" ? styles.activeTab : {},
+              ]}
+              onPress={() => setActiveTab("upcoming")}
+            >
+              Sắp tới
+            </Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "overdue" ? styles.activeTab : {},
+              ]}
+              onPress={() => setActiveTab("overdue")}
+            >
+              Quá hạn
+            </Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "completed" ? styles.activeTab : {},
+              ]}
+              onPress={() => setActiveTab("completed")}
+            >
+              Đã hoàn thành
+            </Text>
+          </View>
+        </View>
+
+        {/* Assignment List */}
+        <ScrollView style={styles.assignmentList}>
+          {activeTab === "upcoming" &&
+            renderAssignments(assignmentsData.upcoming)}
+          {activeTab === "overdue" &&
+            renderAssignments(assignmentsData.overdue)}
+          {activeTab === "completed" &&
+            renderAssignments(assignmentsData.completed)}
+        </ScrollView>
+
+        {/* Thanh điều hướng dưới */}
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            style={styles.tabBarButton}
+            onPress={() => router.push("/(tabsv)/notifications_screen")}
           >
-            Sắp tới
-          </Text>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "overdue" ? styles.activeTab : {},
-            ]}
-            onPress={() => setActiveTab("overdue")}
+            <Icon name="notifications" size={24} color="black" />
+            <Text style={styles.tabBarLabel}>Hoạt động</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tabBarButton}
+            onPress={() => router.push("/chat-screen")}
           >
-            Quá hạn
-          </Text>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "completed" ? styles.activeTab : {},
-            ]}
-            onPress={() => setActiveTab("completed")}
+            <Icon name="chat" size={24} color="black" />
+            <Text style={styles.tabBarLabel}>Trò chuyện</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tabBarButton}
+            onPress={() => router.push("/(tabsv)/home_sv")}
           >
-            Đã hoàn thành
-          </Text>
+            <Icon name="group" size={24} color="black" />
+            <Text style={styles.tabBarLabel}>Nhóm</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.tabBarButton}>
+            <Icon name="assignment" size={24} color="purple" />
+            <Text style={[styles.tabBarLabel, { color: "purple" }]}>
+              Bài tập
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.tabBarButton}
+            onPress={() => router.push("/user-info")}
+          >
+            <Icon name="person" size={24} color="black" />
+            <Text style={styles.tabBarLabel}>Cá nhân</Text>
+          </TouchableOpacity>
         </View>
       </View>
-
-      {/* Assignment List */}
-      <ScrollView style={styles.assignmentList}>
-        {activeTab === "upcoming" &&
-          renderAssignments(assignmentsData.upcoming)}
-        {activeTab === "overdue" && renderAssignments(assignmentsData.overdue)}
-        {activeTab === "completed" &&
-          renderAssignments(assignmentsData.completed)}
-      </ScrollView>
-
-      {/* Thanh điều hướng dưới */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabBarButton}
-        onPress={()=>router.push('/(tabsv)/notifications_screen')}>
-          <Icon name="notifications" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Hoạt động</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}
-        onPress={()=>router.push('/chat-screen')}>
-          <Icon name="chat" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Trò chuyện</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}
-        onPress={()=>router.push('/(tabsv)/home_sv')}>
-          <Icon name="group" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Nhóm</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tabBarButton}
-        >
-          <Icon name="assignment" size={24} color="purple" />
-          <Text style={[styles.tabBarLabel, { color: "purple" }]}>Bài tập</Text>
-        </TouchableOpacity>
-       
-        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info')}>
-          <Icon name="person" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Cá nhân</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#d32f2f", // Màu header
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
   },
   header: {
     padding: 20,
-    backgroundColor: "#b71c1c",
+    backgroundColor: "#d32f2f",
     alignItems: "center",
   },
   userImage: {
@@ -320,11 +352,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   card: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    backgroundColor: "#fff",
     borderRadius: 8,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -332,33 +364,33 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   iconContainer: {
-    backgroundColor: '#D32F2F',
+    backgroundColor: "#D32F2F",
     borderRadius: 4,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     height: 40,
     width: 40,
     marginRight: 10,
   },
   iconText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   textContainer: {
     flex: 1,
   },
   title: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 6,
   },
   subText: {
     fontSize: 14,
-    color: '#555',
+    color: "#555",
   },
 });
 

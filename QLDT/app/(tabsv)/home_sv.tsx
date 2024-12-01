@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import Icons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -63,7 +64,10 @@ const Home = () => {
       if (response.data.meta.code === "1000") {
         setClasses(response.data.data.page_content);
       } else {
-        console.error("Failed to fetch classes: Code not 1000", response.data.meta);
+        console.error(
+          "Failed to fetch classes: Code not 1000",
+          response.data.meta
+        );
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -101,74 +105,85 @@ const Home = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>V2</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.avatarContainer}>
+            <Text style={styles.avatarText}>V2</Text>
+          </View>
+          <Text style={styles.headerTitle}>Nhóm</Text>
+          <Link href="/class_register">
+            <Icon name="menu" size={30} color="black" />
+          </Link>
         </View>
-        <Text style={styles.headerTitle}>Nhóm</Text>
-        <Link href="/class_register">
-          <Icon name="menu" size={30} color="black" />
-        </Link>
-      </View>
 
-      <View style={styles.searchContainer}>
-        <Icon name="search" size={24} color="gray" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Tìm kiếm"
-          value={search}
-          onChangeText={setSearch}
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={24} color="gray" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Tìm kiếm"
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
+
+        <Text style={styles.sectionTitle}>Lớp học</Text>
+        <FlatList
+          data={classes.filter((cls) =>
+            cls.class_name.toLowerCase().includes(search.toLowerCase())
+          )}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.class_id}
+          ListEmptyComponent={
+            <Text style={styles.emptyMessage}>Không có lớp nào</Text>
+          }
         />
-      </View>
 
-      <Text style={styles.sectionTitle}>Lớp học</Text>
-      <FlatList
-        data={classes.filter((cls) =>
-          cls.class_name.toLowerCase().includes(search.toLowerCase())
-        )}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.class_id}
-        ListEmptyComponent={<Text style={styles.emptyMessage}>Không có lớp nào</Text>}
-      />
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            style={styles.tabBarButton}
+            onPress={() => router.push("/(tabsv)/notifications_screen")}
+          >
+            <Icon name="notifications" size={24} color="black" />
+            <Text style={styles.tabBarLabel}>Hoạt động</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tabBarButton}
+            onPress={() => router.push("/chat-screen")}
+          >
+            <Icon name="chat" size={24} color="black" />
+            <Text style={styles.tabBarLabel}>Trò chuyện</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.tabBarButton}>
+            <Icon name="group" size={24} color="purple" />
+            <Text style={[styles.tabBarLabel, { color: "purple" }]}>Nhóm</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tabBarButton}
+            onPress={() => router.push("/(tabsv)/assignment_sv")}
+          >
+            <Icon name="assignment" size={24} color="black" />
+            <Text style={styles.tabBarLabel}>Bài tập</Text>
+          </TouchableOpacity>
 
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={styles.tabBarButton}
-          onPress={() => router.push("/(tabsv)/notifications_screen")}
-        >
-          <Icon name="notifications" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Hoạt động</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabBarButton}
-          onPress={() => router.push("/chat-screen")}
-        >
-          <Icon name="chat" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Trò chuyện</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}>
-          <Icon name="group" size={24} color="purple" />
-          <Text style={[styles.tabBarLabel, { color: "purple" }]}>Nhóm</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabBarButton}
-          onPress={() => router.push("/(tabsv)/assignment_sv")}
-        >
-          <Icon name="assignment" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Bài tập</Text>
-        </TouchableOpacity>
-    
-        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info')}>
-          <Icon name="person" size={24} color="black" />
-          <Text style={styles.tabBarLabel}>Cá nhân</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tabBarButton}
+            onPress={() => router.push("/user-info")}
+          >
+            <Icon name="person" size={24} color="black" />
+            <Text style={styles.tabBarLabel}>Cá nhân</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f5f5f5", // Màu header
+  },
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -277,12 +292,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   emptyMessage: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 16,
     marginVertical: 10,
-    color: 'gray',
+    color: "gray",
   },
-  
 });
 
 export default Home;

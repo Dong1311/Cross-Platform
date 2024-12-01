@@ -50,6 +50,7 @@ export default function RootLayout() {
           <Stack.Screen name="new-chat" options={{ headerShown: false }} />
 
 
+
           {/* <Stack.Screen name="(tabgv)" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabgv)/home_gv" options={{ headerShown: false }} />
           <Stack.Screen name="(tabgv)/edit_class" options={{ headerShown: false }} />

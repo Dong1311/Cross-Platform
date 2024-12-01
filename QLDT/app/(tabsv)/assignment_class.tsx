@@ -11,16 +11,15 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import axios from "axios";
 import { useAuth } from "@/Context/AuthProvider";
 
-// Định nghĩa kiểu Assignment
+
 interface Assignment {
   id: number;
   title: string;
-  dueTime: string;
-  className: string;
-  classLogo: string;
-  points?: number;
-  date: string; // Sử dụng Date cho trường date
-  completed: boolean;
+  description: string;
+  deadline: string; 
+  file_url: string;
+  class_id: string;
+  completed?: boolean; 
 }
 
 interface AssignmentsData {
@@ -28,6 +27,15 @@ interface AssignmentsData {
   overdue: Assignment[];
   completed: Assignment[];
 }
+
+const formatDate = (dateString: string | Date): string => {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); 
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 
 const AssignmentClass = () => {
   const router = useRouter();
@@ -59,13 +67,13 @@ const AssignmentClass = () => {
 
       const tempUpcoming: Assignment[] = [];
       const tempOverdue: Assignment[] = [];
-      const tempCompleted: Assignment[] = [];
 
+     // phân loại bài tập
       response.data.data.forEach((assignment: Assignment) => {
-        const assignmentDate = getDateWithoutTime(new Date(assignment.dueTime));
-        if (assignment.completed) {
-          tempCompleted.push(assignment);
-        } else if (assignmentDate < now) {
+        const assignmentDate = getDateWithoutTime(
+          new Date(assignment.deadline)
+        );
+        if (assignmentDate < now) {
           tempOverdue.push(assignment);
         } else {
           tempUpcoming.push(assignment);
@@ -75,7 +83,7 @@ const AssignmentClass = () => {
       setAssignmentsData({
         upcoming: tempUpcoming,
         overdue: tempOverdue,
-        completed: tempCompleted,
+        completed: [], // Tạm thời không có dữ liệu "completed"
       });
     } catch (error) {
       console.error("Error fetching assignments:", error);
@@ -95,8 +103,9 @@ const AssignmentClass = () => {
 
     const groupedAssignments: { [key: string]: Assignment[] } = {};
     assignments.forEach((assignment) => {
-      const assignmentDate = new Date(assignment.dueTime);
-      const dateString = assignmentDate.toLocaleDateString();
+      const assignmentDate = new Date(assignment.deadline);
+      // const dateString = assignmentDate.toLocaleDateString();
+      const dateString = formatDate(assignmentDate)
       if (!groupedAssignments[dateString]) {
         groupedAssignments[dateString] = [];
       }
@@ -113,22 +122,29 @@ const AssignmentClass = () => {
             onPress={() =>
               router.push({
                 pathname: "/submission",
-                params: assignment,
+                params: {
+                  id: assignment.id,
+                  title: assignment.title,
+                  description: assignment.description,
+                  deadline: assignment.deadline,
+                  file_url: assignment.file_url,
+                  class_id: assignment.class_id,
+                },
               })
             }
           >
             <View style={styles.iconContainer}>
               <Text style={styles.iconText}>
-                {new Date(assignment.dueTime).getDate()}
+                {new Date(assignment.deadline).getDate()}
               </Text>
             </View>
             <View style={styles.textContainer}>
               <Text style={styles.title}>{assignment.title}</Text>
               <Text style={styles.subText}>
                 Đến hạn lúc{" "}
-                {new Date(assignment.dueTime).toLocaleTimeString().slice(0, 5)}
+                {new Date(assignment.deadline).toLocaleTimeString().slice(0, 5)}
               </Text>
-              <Text style={styles.subText}>Lớp {assignment.className}</Text>
+              <Text style={styles.subText}>Mô tả: {assignment.description}</Text>
             </View>
           </TouchableOpacity>
         ))}

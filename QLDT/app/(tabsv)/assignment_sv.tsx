@@ -32,6 +32,13 @@ interface AssignmentsData {
   overdue: Assignment[];
   completed: Assignment[];
 }
+const formatDate = (dateString: string | Date): string => {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); 
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 const AssignmentApp = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("upcoming");
@@ -62,7 +69,7 @@ const AssignmentApp = () => {
       const tempCompleted: Assignment[] = [];
 
       // Phân loại bài tập
-      response.data.data.forEach((assignment) => {
+      response.data.data.forEach((assignment : any) => {
         const assignmentDate = getDateWithoutTime(new Date(assignment.deadline)); // Chuyển date từ API
 
         if (assignment.is_submitted) {
@@ -101,7 +108,8 @@ const AssignmentApp = () => {
     const groupedAssignments: { [key: string]: Assignment[] } = {};
     assignments.forEach((assignment) => {
       const assignmentDate = new Date(assignment.deadline); // Chuyển đổi thành đối tượng Date
-      const dateString = assignmentDate.toLocaleDateString(); // Gọi toLocaleDateString() sau khi chuyển đổi
+      // const dateString = assignmentDate.toLocaleDateString(); // Gọi toLocaleDateString() sau khi chuyển đổi
+      const dateString = formatDate(assignmentDate)
       if (!groupedAssignments[dateString]) {
         groupedAssignments[dateString] = [];
       }

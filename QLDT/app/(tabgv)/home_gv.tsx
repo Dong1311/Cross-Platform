@@ -19,7 +19,8 @@ const Home = () => {
   // State để quản lý danh sách lớp học và tìm kiếm
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true); // State để quản lý trạng thái loading
-  const { token, role, accountId, setClassList,classList } = useAuth()  as AuthContextType;
+  const [unreadCount, setUnreadCount] = useState(0); // Trạng thái lưu trữ số thông báo chưa đọc
+  const { token, role, accountId, setClassList,classList , avatar} = useAuth() as unknown  as AuthContextType;
 
   interface AuthContextType {
     token: string;
@@ -27,6 +28,7 @@ const Home = () => {
     accountId: string;
     setClassList: React.Dispatch<React.SetStateAction<ClassItem[]>>;
     classList: ClassItem[];
+    avatar: string;
   }
   interface ClassItem {
     class_id: string;
@@ -104,6 +106,23 @@ const Home = () => {
     </TouchableOpacity>
   );
 
+  const fetchUnreadNotifications = async () => {
+    try {
+      const response = await axios.post(
+        "http://157.66.24.126:8080/it5023e/get_unread_notification_count",
+        { token }
+      );
+      if (response.data.meta.code === "1000") {
+        console.log(response.data.data);
+        setUnreadCount(response.data.data); // Cập nhật số thông báo chưa đọc
+      } else {
+        console.error("Failed to fetch unread notifications", response.data.meta);
+      }
+    } catch (error) {
+      console.error("Error fetching unread notifications:", error);
+    }
+  };
+
   // Hàm để sinh màu ngẫu nhiên cho các biểu tượng lớp
   const getRandomColor = () => {
     const colors = [
@@ -121,12 +140,12 @@ const Home = () => {
     <View style={styles.container}>
       {/* Phần tìm kiếm */}
       <View style={styles.header}>
-        <View style={styles.avatarContainer}>
+        <TouchableOpacity style={styles.avatarContainer} onPress={() => router.push('/user-info-gv')}>
           <Image
             style={styles.avatar}
-            source={require("../../assets/images/user.png")}
+            source={avatar ? { uri: avatar } : require("../../assets/images/user.png")}
           />
-        </View>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Nhóm</Text>
         <Link href="/create_class">
           <Icon name="menu" size={30} color="black" />
@@ -166,8 +185,18 @@ const Home = () => {
 
       {/* Thanh điều hướng dưới */}
       <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabBarButton}>
-          <Icon name="notifications" size={24} color="black" />
+      <TouchableOpacity
+          style={styles.tabBarButton}
+          onPress={() => router.push("/(tabsv)/notifications_screen")}
+        >
+          <View style={styles.notificationContainer}>
+            <Icon name="notifications" size={24} color="black" />
+            {unreadCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>{unreadCount}</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.tabBarLabel}>Hoạt động</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarButton}
@@ -202,7 +231,6 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   avatarContainer: {
-    backgroundColor: "orange",
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -212,6 +240,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 40,
     height: 40,
+    borderRadius: 20,
   },
   headerTitle: {
     marginTop: 50,
@@ -305,6 +334,26 @@ const styles = StyleSheet.create({
   tabBarLabel: {
     marginTop: 4,
     fontSize: 12,
+  },
+  notificationContainer: {
+    position: "relative",
+    alignItems: "center",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "red",
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notificationText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
   },
 });
 

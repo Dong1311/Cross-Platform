@@ -158,7 +158,7 @@ export default function App() {
           uri: result.assets[0].uri,
           type: result.assets[0].mimeType ?? '',
           name: result.assets[0].name,
-        });
+        } as any);
 
         const response = await axios.post(
           "http://157.66.24.126:8080/it5023e/upload_material",
@@ -260,18 +260,25 @@ export default function App() {
             <View style={styles.modalBackground}>
               <TouchableWithoutFeedback onPress={() => {}}>
                 <View style={styles.modalContainer}>
-                  <Text style={styles.modalTitle}>Chỉnh sửa tài liệu</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={newDocumentName}
-                    onChangeText={setNewDocumentName}
-                  />
+                  <Text style={styles.modalTitle}>Tài liệu đang chọn</Text>
+                  <Text style={styles.modalText}>{selectedDocument?.material_name}</Text>
 
                   <Pressable
                     style={styles.modalButton}
-                    onPress={handleEditDocumentName}
+                    onPress={() => {
+                      closeModal();
+                      router.push({
+                        pathname: "/edit_document",
+                        params: {
+                          id: selectedDocument?.id,
+                          material_name: selectedDocument?.material_name,
+                          description: selectedDocument?.description,
+                          token: token
+                        }
+                      });
+                    }}
                   >
-                    <Text style={styles.modalButtonText}>Lưu</Text>
+                    <Text style={styles.modalButtonText}>Chỉnh sửa</Text>
                   </Pressable>
 
                   <Pressable style={styles.modalButton} onPress={confirmDelete}>

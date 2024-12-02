@@ -196,7 +196,7 @@ const ViewAttendance: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <View>
+      <View style={{ flex: 1 }}>
         {msgError ? (
           <Text style={styles.errorText}>{msgError}</Text>
         ) : (

@@ -127,7 +127,27 @@ const NotificationsScreen: React.FC = () => {
   if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
   if (error) return <Text style={styles.error}>{error}</Text>;
   if (!notifications.length)
-    return <Text style={styles.noData}>No notifications available</Text>;
+    return (  
+      <>
+      <StatusBar backgroundColor="#d32f2f" barStyle="light-content" />
+      <SafeAreaView style={styles.containerAll}>
+        <View style={styles.navBar}>
+          <TouchableOpacity
+            style={styles.arrow}
+            onPress={() => {
+              router.back();
+            }}
+          >
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <View style={styles.navTitleContainer}>
+            <Text style={styles.navTitle}>Thông báo</Text>
+          </View>
+        </View>
+        <Text style={styles.noData}>No notifications available</Text>
+      </SafeAreaView>
+      </>
+    );
 
   return (
     <>

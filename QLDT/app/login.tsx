@@ -17,7 +17,7 @@ const Login = () => {
   const router = useRouter();  // Khởi tạo useRouter
   const device_id = 1;
   const fcm_token = null;
-  const { saveToken, setRole, setAccountId } = useAuth();
+  const { saveToken, setRole, setAccountId , setAvatar } = useAuth();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -32,6 +32,7 @@ const Login = () => {
         console.log(res.data.data.token)
         saveToken(res.data.data.token)
         setRole(res.data.data.role)
+        setAvatar(convertGoogleDriveLink(res.data.data.avatar))
         setAccountId(res.data.data.id)
         if(res.data.data.role === 'STUDENT') {
           router.push('/home_sv')
@@ -42,6 +43,24 @@ const Login = () => {
     } catch (error : any) {
       console.log(error.response.data)
       setErrorMessage(error.response.data.message)
+    }
+  };
+
+  const convertGoogleDriveLink = (driveLink: string): string => {
+    try {
+      // Kiểm tra nếu là link Google Drive
+      if (driveLink && driveLink.includes('drive.google.com')) {
+        // Lấy file ID từ link
+        const fileId = driveLink.match(/[-\w]{25,}/);
+        if (fileId) {
+          // Trả về link trực tiếp
+          return `https://drive.google.com/uc?export=view&id=${fileId[0]}`;
+        }
+      }
+      return driveLink;
+    } catch (error) {
+      console.error('Lỗi xử lý link avatar:', error);
+      return '';
     }
   };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  Image,
   FlatList,
   TextInput,
   TouchableOpacity,
@@ -30,12 +31,13 @@ const Home = () => {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0); // Trạng thái lưu trữ số thông báo chưa đọc
   const router = useRouter();
-  const { token, role, accountId } = useAuth() as AuthContextType;
+  const { token, role, accountId, avatar } = useAuth() as AuthContextType;
   console.log(unreadCount)
   interface AuthContextType {
     token: string;
     role: string;
     accountId: string;
+    avatar: string;
   }
 
   useEffect(() => {
@@ -119,9 +121,13 @@ const Home = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>V2</Text>
-        </View>
+        <TouchableOpacity style={styles.avatarContainer} onPress={() => router.push('/user-info')}>
+          <Image 
+            source={avatar ? { uri: avatar } : require("../../assets/images/user.png")} 
+            style={styles.avatarImage}
+            alt="Avatar"
+          />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Nhóm</Text>
         <Link href="/class_register">
           <Icon name="menu" size={30} color="black" />
@@ -208,12 +214,16 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   avatarContainer: {
-    backgroundColor: "orange",
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+  },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   avatarText: {
     color: "white",

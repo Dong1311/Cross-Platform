@@ -12,7 +12,6 @@ import Icons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Link, useRouter } from "expo-router";
 import axios from "axios";
 import { useAuth } from "@/Context/AuthProvider";
-import AssignmentCard from "@/components/AssignmentCard";
 
 // Định nghĩa kiểu Assignment
 interface Assignment {
@@ -36,6 +35,26 @@ const AssignmentApp = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("upcoming");
   const {token} = useAuth()
+  const [unreadCount, setUnreadCount] = useState(0); // Trạng thái lưu trữ số thông báo chưa đọc
+
+
+  // Hàm gọi API để lấy số lượng thông báo chưa đọc
+  const fetchUnreadNotifications = async () => {
+    try {
+      const response = await axios.post(
+        "http://157.66.24.126:8080/it5023e/get_unread_notification_count",
+        { token }
+      );
+      if (response.data.meta.code === "1000") {
+        console.log(response.data.data);
+        setUnreadCount(response.data.data); // Cập nhật số thông báo chưa đọc
+      } else {
+        console.error("Failed to fetch unread notifications", response.data.meta);
+      }
+    } catch (error) {
+      console.error("Error fetching unread notifications:", error);
+    }
+  };
 
   const [assignmentsData, setAssignmentsData] = useState<AssignmentsData>({
     upcoming: [],
@@ -89,6 +108,7 @@ const AssignmentApp = () => {
   // Gọi fetch API khi component được mount
   useEffect(() => {
     fetchAssignments();
+    fetchUnreadNotifications();
   }, []);
 
   const renderAssignments = (assignments: Assignment[]) => {
@@ -122,7 +142,7 @@ const AssignmentApp = () => {
              </View>
              <View style={styles.textContainer}>
                <Text style={styles.title}>{assignment.title}</Text>
-               <Text style={styles.subText}>{`Đến hạn lúc ${new Date(assignment.deadline).toLocaleTimeString().slice(0, 5)}`}</Text>
+               <Text style={styles.subText}>{`Đến hạn lúc ${new Date(new Date(assignment.deadline).getTime() + 7 * 60 * 60 * 1000).toLocaleTimeString().slice(0, 5)}`}</Text>
                <Text style={styles.subText}>{`Lớp ${assignment.class_id}`}</Text>
              </View>
            </TouchableOpacity>
@@ -179,28 +199,41 @@ const AssignmentApp = () => {
 
       {/* Thanh điều hướng dưới */}
       <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabBarButton}
-        onPress={()=>router.push('/(tabsv)/notifications_screen')}>
-          <Icon name="notifications" size={24} color="black" />
+        <TouchableOpacity
+          style={styles.tabBarButton}
+          onPress={() => router.push("/(tabsv)/notifications_screen")}
+        >
+          <View style={styles.notificationContainer}>
+            <Icon name="notifications" size={24} color="black" />
+            {unreadCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>{unreadCount}</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.tabBarLabel}>Hoạt động</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}
-        onPress={()=>router.push('/chat-screen')}>
+
+        {/* Các tab khác */}
+        <TouchableOpacity
+          style={styles.tabBarButton}
+          onPress={() => router.push("/list-chat")}
+        >
           <Icon name="chat" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Trò chuyện</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabBarButton}
-        onPress={()=>router.push('/(tabsv)/home_sv')}>
+        <TouchableOpacity style={styles.tabBarButton} onPress={() => router.replace("/home_sv")}>
           <Icon name="group" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Nhóm</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tabBarButton}
+        <TouchableOpacity
+          style={styles.tabBarButton}
+          onPress={() => router.push("/(tabsv)/assignment_sv")}
         >
           <Icon name="assignment" size={24} color="purple" />
           <Text style={[styles.tabBarLabel, { color: "purple" }]}>Bài tập</Text>
         </TouchableOpacity>
-       
+
         <TouchableOpacity style={styles.tabBarButton} onPress={() => router.push('/user-info')}>
           <Icon name="person" size={24} color="black" />
           <Text style={styles.tabBarLabel}>Cá nhân</Text>
@@ -306,6 +339,7 @@ const styles = StyleSheet.create({
   },
   tabBarButton: {
     alignItems: "center",
+    flex: 1,
   },
   tabBarLabel: {
     marginTop: 4,
@@ -352,6 +386,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
   },
+  notificationContainer: {
+    position: "relative",
+    alignItems: "center",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "red",
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notificationText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
+  }
 });
 
 export default AssignmentApp;

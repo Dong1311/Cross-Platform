@@ -66,6 +66,7 @@ const LeaveRequestScreen: React.FC = () => {
           name: file.assets[0].name,
         });
       }
+
       const res = await axios.post('http://157.66.24.126:8080/it5023e/request_absence', formdata,
         {
           headers: {
@@ -78,7 +79,7 @@ const LeaveRequestScreen: React.FC = () => {
       }
     } catch (error : any) {
       console.log(error.response.data);
-      Alert.alert("Thất bại", error.response.data.meta.message)
+      Alert.alert("Thất bại", error.response.data)
     }
   };
 

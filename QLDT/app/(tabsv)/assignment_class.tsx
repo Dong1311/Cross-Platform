@@ -15,12 +15,13 @@ import { useAuth } from "@/Context/AuthProvider";
 interface Assignment {
   id: number;
   title: string;
-  dueTime: string;
+  deadline: string;
   className: string;
   classLogo: string;
   points?: number;
   date: string; // Sử dụng Date cho trường date
   completed: boolean;
+  class_id: number;
 }
 
 interface AssignmentsData {
@@ -62,7 +63,7 @@ const AssignmentClass = () => {
       const tempCompleted: Assignment[] = [];
 
       response.data.data.forEach((assignment: Assignment) => {
-        const assignmentDate = getDateWithoutTime(new Date(assignment.dueTime));
+        const assignmentDate = getDateWithoutTime(new Date(assignment.deadline));
         if (assignment.completed) {
           tempCompleted.push(assignment);
         } else if (assignmentDate < now) {
@@ -95,7 +96,7 @@ const AssignmentClass = () => {
 
     const groupedAssignments: { [key: string]: Assignment[] } = {};
     assignments.forEach((assignment) => {
-      const assignmentDate = new Date(assignment.dueTime);
+      const assignmentDate = new Date(assignment.deadline);
       const dateString = assignmentDate.toLocaleDateString();
       if (!groupedAssignments[dateString]) {
         groupedAssignments[dateString] = [];
@@ -119,16 +120,16 @@ const AssignmentClass = () => {
           >
             <View style={styles.iconContainer}>
               <Text style={styles.iconText}>
-                {new Date(assignment.dueTime).getDate()}
+                {new Date(assignment.deadline).getDate()}
               </Text>
             </View>
             <View style={styles.textContainer}>
               <Text style={styles.title}>{assignment.title}</Text>
               <Text style={styles.subText}>
                 Đến hạn lúc{" "}
-                {new Date(assignment.dueTime).toLocaleTimeString().slice(0, 5)}
+                {new Date(assignment.deadline).toLocaleTimeString().slice(0, 5)}
               </Text>
-              <Text style={styles.subText}>Lớp {assignment.className}</Text>
+              <Text style={styles.subText}>Lớp {assignment.class_id}</Text>
             </View>
           </TouchableOpacity>
         ))}

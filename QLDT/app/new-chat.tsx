@@ -40,7 +40,7 @@ const convertGoogleDriveLink = (driveLink: string): string => {
   }
 };
 
-const NewChatScreen = ({ navigation }) => {
+const NewChatScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);

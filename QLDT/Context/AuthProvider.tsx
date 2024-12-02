@@ -40,6 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [classList, setClassList] = useState<ClassInfo[] | null>(null);
   const [classId, setClassId] = useState<string | null>(null);
   const [assignmentsData, setAssignmentsData] = useState<any[]>([]);
+  const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     loadToken();
@@ -115,6 +116,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     assignmentsData,
     setAssignmentsData,
     setAuth,
+    avatar,
+    setAvatar,
   };
 
   return (

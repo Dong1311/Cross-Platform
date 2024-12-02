@@ -70,7 +70,7 @@ const ClassDetail = () => {
         search: searchText,
         pageable_request: {
           page: '0',
-          page_size: '5',
+          page_size: '20',
         },
       });
       setStudents(response.data.data.page_content);
